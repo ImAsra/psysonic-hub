@@ -2,9 +2,9 @@
 #   docker compose up -d
 services:
   psysonic-hub:
-    image: ghcr.io/OWNER/psysonic-hub:latest # TODO: replace OWNER with the GitHub user/org that publishes the image
+    image: ghcr.io/imasra/psysonic-hub:latest # TODO: replace imasra with the GitHub user/org that publishes the image
     # No registry? Build straight from the repository instead (replace the line above):
-    # build: https://github.com/OWNER/psysonic-hub.git#main
+    # build: https://github.com/imasra/psysonic-hub.git#main
     container_name: psysonic-hub
     restart: unless-stopped
     env_file: .env
