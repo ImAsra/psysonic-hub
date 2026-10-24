@@ -1,0 +1,25 @@
+# Psysonic Hub. Put this file and your ".env" (see .env.example) in a folder, then:
+#   docker compose up -d
+services:
+  psysonic-hub:
+    image: ghcr.io/OWNER/psysonic-hub:latest # TODO: replace OWNER with the GitHub user/org that publishes the image
+    # No registry? Build straight from the repository instead (replace the line above):
+    # build: https://github.com/OWNER/psysonic-hub.git#main
+    container_name: psysonic-hub
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5533:5533"
+    volumes:
+      - hubdata:/data # keeps the shared settings across restarts
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+
+volumes:
+  hubdata:
