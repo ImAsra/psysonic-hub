@@ -69,7 +69,7 @@ Position is not streamed continuously: extrapolate from `position_sec` and `serv
 
 ## Control (needs `API_TOKEN`)
 
-All bodies are JSON. By default a command goes to the active device; add `"device": "<id or name>"` to target another player. If nothing is active the answer is `409 no_active_device`.
+All bodies are JSON. By default a command goes to the active device; add `"device": "<id or name>"` to target another player. A name may be partial and any case: `"laptop"` finds "Psysonic laptop". If a partial name fits several players the answer is `409 ambiguous_device` with a `matches` list; if it fits none, `404 unknown_device`. If nothing is active the answer is `409 no_active_device`.
 
 | Request | Body |
 |---|---|
@@ -78,8 +78,10 @@ All bodies are JSON. By default a command goes to the active device; add `"devic
 | `POST /api/volume` | `{"volume": 0.5}` (0 to 1) or `{"delta": 0.05}` |
 | `POST /api/shuffle` | `{"value": true}`, `false` or `"toggle"` |
 | `POST /api/repeat` | `{"value": "off"}`, `"all"`, `"one"` or `"cycle"` |
-| `POST /api/transfer` | `{"device": "Laptop"}` — move playback there |
+| `POST /api/transfer` | `{"device": "Laptop"}` — move playback there. Answers `409 server_mismatch` if that device uses a different music server or account. The handoff itself is asynchronous (the playing device saves its queue first), so check `/api/state` afterwards |
 | `POST /api/command` | `{"action": "...", "args": {...}, "device": "..."}` (any of the above by name) |
+
+Relative values (`delta`, `"toggle"`, `"cycle"`) start from what **the targeted device** last reported, not from the active device. If that device has not reported the needed value yet, the answer is `409 device_state_unknown` (an absolute value always works).
 
 Success: `{"ok": true, "target": {"id": "...", "name": "..."}}`.
 

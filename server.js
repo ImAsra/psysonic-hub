@@ -17,7 +17,11 @@ if (errors.length) {
 }
 
 const auth = createAuth(cfg);
-const hub = createHub({ dataDir: cfg.dataDir, maxDevices: cfg.maxDevices });
+const hub = createHub({
+  dataDir: cfg.dataDir, maxDevices: cfg.maxDevices, serverCheck: cfg.serverCheck, yieldTimeoutMs: cfg.yieldTimeoutMs,
+});
+
+process.on('unhandledRejection', (e) => console.error('unhandled rejection:', e));
 const api = createApi({ hub, auth, cfg, baseHeaders });
 
 const HELLO_TIMEOUT_MS = 5000;
@@ -73,7 +77,9 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true }, { 'set-cookie': auth.setCookie(out.id, req) });
     }
     if (route === '/auth/logout' && req.method === 'POST') {
-      auth.logout(req);
+      const sid = auth.logout(req);
+      // Signing out also ends the page's open WebSocket(s); a socket must not outlive its session.
+      if (sid) for (const c of wss.clients) if (c.sessionId === sid) c.close(4005, 'signed out');
       return sendJson(res, 200, { ok: true }, { 'set-cookie': auth.clearCookie(req) });
     }
 
@@ -91,7 +97,8 @@ const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 2 * 1024 * 10
 
 wss.on('connection', (ws, req) => {
   // A browser session counts only for this site's own pages (cross-site WebSocket hijacking guard).
-  const sessionOk = auth.mode === 'password' && !!auth.sessionFromReq(req) && auth.originOk(req);
+  const sessionId = auth.mode === 'password' ? auth.sessionFromReq(req) : null;
+  const sessionOk = !!sessionId && auth.originOk(req);
   let id = null;
   let remoteOnly = false; // web remotes can control devices but are not players
   ws.isAlive = true;
@@ -112,37 +119,51 @@ wss.on('connection', (ws, req) => {
       if (!byToken && !sessionOk) return ws.close(4005, 'unauthorized');
       if (typeof m.deviceId !== 'string' || !/^[\w-]{4,64}$/.test(m.deviceId)) return ws.close(4006, 'bad deviceId');
       const kind = !byToken ? 'web' : m.kind; // a session login is always a web remote
-      const joined = hub.join(m.deviceId, { ws, name: m.name, kind });
+      const joined = hub.join(m.deviceId, { ws, name: m.name, kind, server: m.server });
       if (joined.error) return ws.close(4007, joined.error);
       clearTimeout(helloTimer);
       id = m.deviceId;
       remoteOnly = kind === 'web';
+      if (!byToken) ws.sessionId = sessionId; // tied to the login session: ends when it ends
       return;
     }
 
-    switch (m.t) {
-      case 'state': // players only
-        if (remoteOnly || !m.state || typeof m.state !== 'object') return;
-        return hub.reportState(id, m.state);
-      case 'command':
-        return void hub.command(m.to, m.action, m.args, id);
-      case 'transfer':
-        return void hub.transfer(m.to, id, m.fresh === true);
-      case 'yielded':
-        return remoteOnly ? undefined : hub.yielded(id);
-      case 'queue-changed':
-        return remoteOnly ? undefined : hub.broadcast({ t: 'queue-changed', from: id }, id);
-      case 'cover':
-        return remoteOnly ? undefined : void hub.setCover(id, m);
-      case 'settings': {
-        if (remoteOnly) return;
-        const cat = hub.updateSettings(m, ws);
-        return cat ? hub.relaySettings(cat, hub.sharedSettings[cat], id) : undefined;
+    try {
+      switch (m.t) {
+        case 'state': // players only
+          if (remoteOnly || !m.state || typeof m.state !== 'object') return;
+          return hub.reportState(id, m.state);
+        case 'command':
+          return void hub.command(m.to, m.action, m.args, id);
+        case 'transfer': {
+          const out = hub.transfer(m.to, id, m.fresh === true);
+          if (out.error) hub.send(ws, { t: 'transfer-failed', to: m.to, reason: out.error });
+          return;
+        }
+        case 'yielded': // players only; ok:false = the queue could not be saved
+          if (remoteOnly) return;
+          return hub.yielded(id, m.ok !== false, typeof m.reason === 'string' ? m.reason.slice(0, 40) : undefined);
+        case 'takeover-failed':
+          return remoteOnly ? undefined : hub.takeoverFailed(id, m.reason);
+        case 'server': // the user switched music server/account on this device
+          return remoteOnly ? undefined : hub.setServer(id, m.server);
+        case 'queue-changed': // only to devices that share this device's music server + account
+          return remoteOnly ? undefined : hub.relayToCompatible(id, { t: 'queue-changed', from: id });
+        case 'cover':
+          return remoteOnly ? undefined : void hub.setCover(id, m);
+        case 'settings': {
+          if (remoteOnly) return;
+          const cat = hub.updateSettings(m, ws);
+          return cat ? hub.relaySettings(cat, hub.sharedSettings[cat], id) : undefined;
+        }
+        case 'sync-config':
+          return void hub.setSyncConfig(m.category, m.enabled);
+        case 'ping':
+          return hub.send(ws, { t: 'pong' });
       }
-      case 'sync-config':
-        return void hub.setSyncConfig(m.category, m.enabled);
-      case 'ping':
-        return hub.send(ws, { t: 'pong' });
+    } catch (e) {
+      // One malformed message must never take the whole hub down.
+      console.error('message handler failed:', e);
     }
   });
 
@@ -156,6 +177,7 @@ wss.on('connection', (ws, req) => {
 // Drop dead connections (phones losing signal etc.)
 setInterval(() => {
   for (const ws of wss.clients) {
+    if (ws.sessionId && !auth.sessionActive(ws.sessionId)) { ws.close(4005, 'session ended'); continue; }
     if (!ws.isAlive) { ws.terminate(); continue; }
     ws.isAlive = false;
     ws.ping();

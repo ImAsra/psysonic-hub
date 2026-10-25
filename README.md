@@ -34,6 +34,8 @@ Check it is up: `curl http://<server>:5533/health`.
 | `HUB_TRUST_PROXY` | no | `1` when a reverse proxy is in front (real client address and https come from `X-Forwarded-*`). |
 | `HUB_ALLOWED_ORIGINS` | no | Extra browser origins allowed to open the web socket. |
 | `HUB_CORS_ORIGINS` | no | Browser origins allowed to call `/api` from another site. |
+| `HUB_SERVER_CHECK` | no | `off` to allow handing playback between devices on different music servers or accounts (default: refused, because the queue travels through the music server). If two devices reach the same server by different addresses, give each the other's address as its alternate address instead. |
+| `HUB_YIELD_TIMEOUT_MS` | no | How long the playing device may take to save its queue during a handoff before the transfer is cancelled. Default `10000`. |
 | `PORT`, `MAX_DEVICES` | no | Default `5533` and `16`. |
 
 Generate secrets with `openssl rand -hex 24`.
@@ -69,6 +71,8 @@ location / {
 ## Security notes
 
 - The apps use `HUB_TOKEN`. The web page uses the login (`HUB_USER`/`HUB_PASSWORD`) and gets a session cookie (`HttpOnly`, `SameSite=Strict`, `Secure` over HTTPS). Sessions live in memory, so restarting the hub signs the page out.
+- Signing out (or a session expiring) also closes that page's open WebSocket. Connections made with `HUB_TOKEN` are not tied to a login.
+- Playback is only handed between devices that use the same music server and account, and only after the playing device confirmed it saved its queue.
 - Failed logins are rate limited per client address (5 tries, then a lock of 5 minutes that doubles up to 1 hour).
 - A browser session is only accepted for this site's own pages (the WebSocket checks the `Origin`).
 - The API has separate credentials. The read-only key may be passed as `?key=` (for places that cannot send headers, like a browser image tag); the full-control token never works from a URL.
