@@ -10,7 +10,7 @@
     "test": "node test.js && node test-auth-api.js && node test-hardening.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "ws": "^8.20.1"
