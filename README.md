@@ -94,8 +94,6 @@ Planned or under consideration, roughly in this order:
 - **Library analysis sharing:** devices on the same music server sharing the results of heavy analysis instead of each redoing it.
 - **Ideas:** MQTT / Home Assistant discovery, a small activity history, per-device tokens.
 
-The hub is an independent project: Psysonic itself only gets the minimal, documented changes needed for compatibility, listed in [docs/PSYSONIC-INTEGRATION.md](docs/PSYSONIC-INTEGRATION.md).
-
 ## Development
 
 ```sh
