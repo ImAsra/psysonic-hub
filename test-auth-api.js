@@ -145,6 +145,24 @@ try {
   await wait();
   assert.equal(last(laptop, 'command').action, 'pause');
 
+  // ---- partial names: "pc" finds "Living Room PC"; shared words are ambiguous ----
+  const pc = connect(PORT, 'living-pc-0001', 'Living Room PC', 'desktop');
+  const tv = connect(PORT, 'living-tv-0001', 'Living Room TV', 'desktop');
+  await wait();
+  pc.inbox.length = 0;
+  assert.equal((await post('/api/command', { action: 'pause', device: 'pc' }, bearer(API_FULL))).status, 200);
+  await wait();
+  assert.equal(last(pc, 'command').action, 'pause');
+  const amb = await post('/api/command', { action: 'pause', device: 'living' }, bearer(API_FULL));
+  assert.equal(amb.status, 409);
+  const ambBody = await amb.json();
+  assert.equal(ambBody.error, 'ambiguous_device');
+  assert.deepEqual(ambBody.matches.sort(), ['Living Room PC', 'Living Room TV']);
+  assert.equal((await post('/api/command', { action: 'pause', device: 'room tv' }, bearer(API_FULL))).status, 200);
+  assert.equal((await post('/api/command', { action: 'pause', device: 'nothing-like-this' }, bearer(API_FULL))).status, 404);
+  pc.close(); tv.close();
+  await wait();
+
   // ---- transfer by name ----
   desk.inbox.length = 0; laptop.inbox.length = 0;
   assert.equal((await post('/api/transfer', { device: 'Laptop' }, bearer(API_FULL))).status, 200);
@@ -225,7 +243,7 @@ try {
 // ================= lockout after repeated failures (own instance, own IP budget) =================
 const srv2 = await startHub(5595, { HUB_USER: USER, HUB_PASSWORD: PASS });
 try {
-  const login = (password) => fetch('http://127.0.0.1:5595/auth/login', { method: 'POST', body: JSON.stringify({ user: USER, password }) });
+  const login = (password) => fetch('http://127.0.0.1:5595/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: USER, password }) });
   for (let i = 0; i < 4; i++) assert.equal((await login('bad-password-x')).status, 401);
   const locked = await login('bad-password-x'); // 5th failure
   assert.equal(locked.status, 429);
@@ -244,7 +262,7 @@ assert.equal(code, 1, 'refuses to start with a weak password');
 const srv3 = await startHub(5593);
 try {
   assert.equal((await (await fetch('http://127.0.0.1:5593/auth/config')).json()).mode, 'token');
-  assert.equal((await fetch('http://127.0.0.1:5593/auth/login', { method: 'POST', body: '{}' })).status, 404);
+  assert.equal((await fetch('http://127.0.0.1:5593/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 404);
   assert.equal((await fetch('http://127.0.0.1:5593/api/state')).status, 401);
   assert.equal((await fetch('http://127.0.0.1:5593/api/state', { headers: bearer(TOKEN) })).status, 200);
 } finally {
