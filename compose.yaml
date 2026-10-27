@@ -2,7 +2,7 @@
 #   docker compose up -d
 services:
   psysonic-hub:
-    image: ghcr.io/imasra/psysonic-hub:latest # TODO: replace imasra with the GitHub user/org that publishes the image
+    image: ghcr.io/imasra/psysonic-hub:latest # built and published by this repository's workflow
     # No registry? Build straight from the repository instead (replace the line above):
     # build: https://github.com/imasra/psysonic-hub.git#main
     container_name: psysonic-hub
@@ -10,8 +10,13 @@ services:
     env_file: .env
     ports:
       - "5533:5533"
+      # Behind a reverse proxy on the same machine? Publish on the loopback interface only,
+      # so the proxy is the single way in (and set HUB_TRUST_PROXY=1 in .env):
+      # - "127.0.0.1:5533:5533"
     volumes:
       - hubdata:/data # keeps the shared settings across restarts
+    init: true # proper signal handling and zombie reaping
+    stop_grace_period: 10s
     read_only: true
     tmpfs:
       - /tmp
@@ -20,6 +25,7 @@ services:
     security_opt:
       - no-new-privileges:true
     mem_limit: 256m
+    pids_limit: 128
 
 volumes:
   hubdata:

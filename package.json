@@ -7,10 +7,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test.js && node test-auth-api.js && node test-hardening.js"
+    "test": "node test.js && node test-auth-api.js && node test-hardening.js && node test-security.js"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "dependencies": {
     "ws": "^8.20.1"

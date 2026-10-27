@@ -52,4 +52,4 @@ A failed save or a missing answer cancels the transfer instead of letting the ta
 
 ## Close codes
 
-4001 hello timeout, 4002 bad JSON, 4003 hello first, 4004 unsupported protocol, 4005 unauthorized (also: the web login this socket belongs to was signed out or expired), 4006 bad deviceId, 4007 too many devices, 4008 replaced by a newer connection of the same device.
+4001 hello timeout, 4002 bad JSON, 4003 hello first, 4004 unsupported protocol, 4005 unauthorized (also: the web login this socket belongs to was signed out or expired), 4006 bad deviceId, 4007 too many devices, 4008 replaced by a newer connection of the same device, 4010 too many connections, 4011 this address is locked out after repeated failures, 4012 message rate exceeded (the hub allows about 30 messages per second per connection; a cover image counts as ten).
