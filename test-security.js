@@ -123,6 +123,27 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   srv.kill();
 }
 
+// ======================= parallel logins cannot get around the lockout =======================
+{
+  const P = 5547;
+  const srv = await startHub(P, { HUB_USER: 'asra', HUB_PASSWORD: PASS });
+  const login = (password) => fetch(`http://127.0.0.1:${P}/auth/login`, { method: 'POST', headers: JSON_H, body: JSON.stringify({ user: 'asra', password }) }).then((r) => r.status);
+  // 40 guesses at once; the 30th carries the CORRECT password. Before the fix every one of them was checked.
+  const burst = await Promise.all([...Array(40)].map((_, i) => login(i === 29 ? PASS : `wrong-guess-${i}`)));
+  assert.notEqual(burst[29], 200, 'a correct password that arrives in a parallel burst must not slip past the guess limit');
+  assert.ok(burst.filter((c) => c === 401).length <= 2, 'only two password checks run at once per address; the rest are turned away unchecked');
+  assert.ok(burst.filter((c) => c === 429).length >= 38);
+  // Keep bursting: each round can evaluate at most a couple of guesses, and the lock engages after five in total.
+  let evaluated = burst.filter((c) => c === 401).length;
+  for (let round = 0; round < 6; round++) {
+    const codes = await Promise.all([...Array(10)].map((_, i) => login(`wrong-${round}-${i}`)));
+    evaluated += codes.filter((c) => c === 401).length;
+  }
+  assert.ok(evaluated <= 4, `at most four guesses are ever evaluated before the lock starts (got ${evaluated})`);
+  assert.equal(await login(PASS), 429, 'the address is locked: even the right password is refused');
+  srv.kill();
+}
+
 // ======================= connection and message limits =======================
 {
   const P = 5564;
@@ -231,6 +252,39 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
     if (!had) fs.unlinkSync(logo);
   }
   srv.kill();
+}
+
+// ======================= numbers are validated, every secret must differ =======================
+{
+  const run = async (env) => {
+    const p = spawn('node', ['server.js'], { env: { ...process.env, PORT: '5546', HUB_TOKEN: TOKEN, ...env } });
+    let err = '';
+    p.stderr.on('data', (d) => (err += d));
+    const code = await new Promise((r) => p.on('exit', r));
+    return { code, err };
+  };
+  for (const [name, value] of [['HUB_MAX_CONNECTIONS', 'abc'], ['HUB_MAX_CONNECTIONS_PER_IP', '0'], ['HUB_MAX_CONNECTIONS_PER_IP', '-3'], ['MAX_DEVICES', '1.5'], ['HUB_YIELD_TIMEOUT_MS', '5'], ['PORT', '70000']]) {
+    const r = await run({ [name]: value });
+    assert.equal(r.code, 1, `${name}=${value} must stop the hub, not silently disable a limit`);
+    assert.match(r.err, new RegExp(`${name} must be a whole number`));
+  }
+  const pw = await run({ HUB_USER: 'asra', HUB_PASSWORD: FULL, API_TOKEN: FULL });
+  assert.equal(pw.code, 1);
+  assert.match(pw.err, /HUB_PASSWORD and API_TOKEN are identical/);
+  const ro = await run({ HUB_USER: 'asra', HUB_PASSWORD: READ, API_TOKEN_READONLY: READ });
+  assert.equal(ro.code, 1);
+  assert.match(ro.err, /HUB_PASSWORD and API_TOKEN_READONLY are identical/);
+  const two = await run({ API_TOKEN: FULL, API_TOKEN_READONLY: FULL });
+  assert.equal(two.code, 1);
+  assert.match(two.err, /API_TOKEN and API_TOKEN_READONLY are identical/);
+}
+
+// ======================= the page copes with the hub's limits =======================
+{
+  const js = fs.readFileSync(new URL('./public/app.js', import.meta.url), 'utf8');
+  assert.match(js, /4011/, 'the page stops retrying when its address is locked out');
+  assert.match(js, /4010/);
+  assert.match(js, /100 - \(Date\.now\(\) - volSentAt\)/, 'volume commands from the slider are throttled');
 }
 
 // ======================= secrets from files, distinct secrets, weak-secret warning, clean shutdown =======================

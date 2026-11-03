@@ -21,9 +21,9 @@ The hub is built for a home network or a VPN, optionally behind an HTTPS reverse
 **Authentication**
 - Apps use `HUB_TOKEN`; the web page uses a username and password from the environment and gets a session cookie (`HttpOnly`, `SameSite=Strict`, and `Secure` with the `__Host-` prefix over HTTPS). Session ids are 256-bit random values; sessions are kept in memory, expire after 30 idle days and never outlive 90 days.
 - Secrets are compared in constant time. The password is checked with scrypt, and user name and password are always both checked, so timing reveals nothing.
-- Wrong logins, wrong device tokens and wrong API tokens all count towards one lockout per address: after the free tries the address is locked for 5 minutes, doubling up to 1 hour. Even the right credentials are refused while locked.
+- Wrong logins, wrong device tokens and wrong API tokens all count towards one lockout per address: after the free tries the address is locked for 5 minutes, doubling up to 1 hour. Even the right credentials are refused while locked. A login attempt is counted *before* the (deliberately slow) password check, and only two checks per address (six in total) run at once, so a burst of parallel requests cannot get around the lockout.
 - Signing out (or a session expiring) closes that page's open WebSocket. Token connections are independent of sessions.
-- The API has its own credentials: `API_TOKEN` (control) and `API_TOKEN_READONLY` (read only). The full-control token never works from a URL. All secrets must be at least 10 to 24 characters, must differ from each other, and a startup warning names any that look guessable. Secrets can also come from files (`HUB_TOKEN_FILE`, ...) for Docker secrets.
+- The API has its own credentials: `API_TOKEN` (control) and `API_TOKEN_READONLY` (read only). The full-control token never works from a URL. Secrets must be at least 10 to 24 characters and **all four must differ from each other** (the hub refuses to start otherwise), and a startup warning names any that look guessable. Numeric settings (ports, limits, timeouts) are validated at startup, so a typo is an error and never silently removes a limit. Secrets can also come from files (`HUB_TOKEN_FILE`, ...) for Docker secrets.
 
 **Web page and browsers**
 - Strict Content-Security-Policy with no inline script or style (`script-src 'self'`, `style-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`), plus `nosniff`, no referrer, a permissions policy, `Cross-Origin-Opener-Policy`, and HSTS when served over HTTPS.
@@ -37,6 +37,7 @@ The hub is built for a home network or a VPN, optionally behind an HTTPS reverse
 
 **Handoff safety**
 - Playback is only handed to a device on the same music server and account, and only after the playing device confirmed that it saved its queue. Otherwise the transfer is cancelled.
+- **Exceptions to know about:** (1) if the playing device disconnects during a handoff there is nobody left to confirm, so the target proceeds with the queue last saved on the music server and the last position the hub knows, which can be slightly outdated; (2) a device that does not report its music server (older apps, or no server selected) counts as compatible; (3) `HUB_SERVER_CHECK=off` switches the account check off.
 
 **Container**
 - Runs as a non-root user, read-only filesystem, all capabilities dropped, `no-new-privileges`, memory and process limits, an init process and a clean shutdown on `docker stop`.

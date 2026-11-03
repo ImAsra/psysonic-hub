@@ -36,7 +36,7 @@ This lists everything the integration touches in the Psysonic repository (28 fil
 ## How it hooks into the existing player
 
 - **Display:** the screens above use small "view" hooks, so they show the other device's values only while another device is the active player.
-- **Controls:** while another device plays, the store actions for play/pause/next/previous/seek/volume/shuffle/repeat/click-to-play/undo are routed to it through the hub instead of the local player (installed in `hubClient.ts`, removed again when the hub is switched off). Nothing else in the store is replaced.
+- **Controls:** while another device plays, the store actions for play/pause/next/previous/seek/volume/shuffle/repeat, the one-shot queue shuffles and click-to-play are routed to it through the hub instead of the local player (installed in `hubClient.ts`, removed again when the hub is switched off; volume commands are throttled to about 10 per second). Undo/redo is **not** a hub command: while another device plays it restores only the local queue, and the change reaches the playing device through the shared Subsonic queue. Nothing else in the store is replaced.
 - **Queue:** it keeps using the existing Subsonic play queue. The hub only says "the queue changed" and a handoff reuses the existing save and restore code.
 - **Credentials:** the integration never reads or sends a server password. It sends one-way hashes of the server address and user name.
 

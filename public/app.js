@@ -73,6 +73,13 @@ function connect() {
     }
   };
   ws.onclose = (e) => {
+    // The hub refuses this address for now: stop retrying (each retry would just be refused again).
+    if (e.code === 4011 || e.code === 4010) {
+      setStatus(e.code === 4011 ? 'Locked out' : 'Too many connections', 'bad');
+      return showLogin(e.code === 4011
+        ? 'Too many failed attempts from this address. Try again in a few minutes.'
+        : 'Too many connections from this address. Close other tabs and try again.');
+    }
     if (e.code === 4005) {
       setStatus(mode === 'password' ? 'Signed out' : 'Wrong token', 'bad');
       return showLogin(mode === 'password' ? 'Your session ended. Please sign in again.' : 'Wrong token.');
@@ -194,7 +201,21 @@ $('seek').onchange = () => {
   if (state) { state.positionSec = Number($('seek').value); stateAt = Date.now(); }
   dragging = false;
 };
-$('vol').oninput = () => { volDragging = true; paint($('vol')); cmd('volume', { volume: Number($('vol').value) }); };
-$('vol').onchange = () => { volDragging = false; };
+// While dragging, send at most one volume command per 100 ms (the hub cuts off connections that flood it),
+// and always send the final value when the drag ends.
+let volTimer = null;
+let volSentAt = 0;
+const sendVolume = () => {
+  clearTimeout(volTimer);
+  volTimer = null;
+  volSentAt = Date.now();
+  cmd('volume', { volume: Number($('vol').value) });
+};
+$('vol').oninput = () => {
+  volDragging = true;
+  paint($('vol'));
+  if (!volTimer) volTimer = setTimeout(sendVolume, Math.max(0, 100 - (Date.now() - volSentAt)));
+};
+$('vol').onchange = () => { sendVolume(); volDragging = false; };
 paint($('seek')); paint($('vol'));
 init();
