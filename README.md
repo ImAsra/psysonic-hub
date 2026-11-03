@@ -36,6 +36,9 @@ Check it is up: `curl http://<server>:5533/health`.
 | `HUB_CORS_ORIGINS` | no | Browser origins allowed to call `/api` from another site. |
 | `HUB_SERVER_CHECK` | no | `off` to allow handing playback between devices on different music servers or accounts (default: refused, because the queue travels through the music server). If two devices reach the same server by different addresses, give each the other's address as its alternate address instead. |
 | `HUB_YIELD_TIMEOUT_MS` | no | How long the playing device may take to save its queue during a handoff before the transfer is cancelled. Default `10000`. |
+| `HUB_MAX_CONNECTIONS`, `HUB_MAX_CONNECTIONS_PER_IP` | no | Open connections in total and per address. Default `64` and `16`. |
+| `HUB_BIND` | no | Address to listen on outside Docker (default all). |
+| `HUB_TOKEN_FILE`, `HUB_PASSWORD_FILE`, `API_TOKEN_FILE`, `API_TOKEN_READONLY_FILE` | no | Read that secret from a file instead (Docker secrets). |
 | `PORT`, `MAX_DEVICES` | no | Default `5533` and `16`. |
 
 Generate secrets with `openssl rand -hex 24`.
@@ -68,16 +71,11 @@ location / {
 }
 ```
 
-## Security notes
+## Security
 
-- The apps use `HUB_TOKEN`. The web page uses the login (`HUB_USER`/`HUB_PASSWORD`) and gets a session cookie (`HttpOnly`, `SameSite=Strict`, `Secure` over HTTPS). Sessions live in memory, so restarting the hub signs the page out.
-- Signing out (or a session expiring) also closes that page's open WebSocket. Connections made with `HUB_TOKEN` are not tied to a login.
-- Playback is only handed between devices that use the same music server and account, and only after the playing device confirmed it saved its queue.
-- Failed logins are rate limited per client address (5 tries, then a lock of 5 minutes that doubles up to 1 hour).
-- A browser session is only accepted for this site's own pages (the WebSocket checks the `Origin`).
-- The API has separate credentials. The read-only key may be passed as `?key=` (for places that cannot send headers, like a browser image tag); the full-control token never works from a URL.
-- The container runs as a non-root user with a read-only filesystem. The only thing it writes is the shared settings file in the `/data` volume.
-- Cover art is uploaded by the playing device and kept in memory (current track only).
+The hub is meant for a home network or a VPN, and it is built to be hard to abuse: separate credentials for apps, web page and API, a lockout on guessing, strict browser protections, size- and rate-limited input, and a locked-down container. Details, the threat model, a deployment checklist and known limitations are in [SECURITY.md](SECURITY.md). Please report vulnerabilities privately (see there).
+
+The short version: use generated secrets, do not expose the port directly to the internet, put a VPN or an HTTPS reverse proxy in front for anything beyond your LAN, and keep the image updated.
 
 ## What is synced
 
@@ -86,6 +84,15 @@ Settings sync works in categories you switch on from the web page: playback (cro
 ## REST API and live events
 
 For Home Assistant, Stream Deck, scripts and the like: see [docs/API.md](docs/API.md). The wire protocol the apps speak is in [docs/PROTOCOL.md](docs/PROTOCOL.md).
+
+## Roadmap
+
+Planned or under consideration, roughly in this order:
+
+- **Webhooks:** the hub calls a URL you configure when the track, play state or active device changes (Home Assistant, n8n, scripts).
+- **Config export and backup:** Psysonic exporting its settings as JSON, and the hub keeping scheduled, off-site copies per device with a "restore from hub" option on a fresh install. Depends on the settings refactoring planned in Psysonic.
+- **Library analysis sharing:** devices on the same music server sharing the results of heavy analysis instead of each redoing it.
+- **Ideas:** MQTT / Home Assistant discovery, a small activity history, per-device tokens.
 
 ## Development
 

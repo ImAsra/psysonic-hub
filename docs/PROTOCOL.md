@@ -32,7 +32,7 @@ The hub answers with `welcome`: `{ t, v, you, devices, state, settings, syncConf
 
 | Message | Meaning |
 |---|---|
-| `command` `{ to, action, args }` | Control another device. Actions: `play`, `pause`, `toggle`, `next`, `prev`, `seek` (`{positionSec}`), `volume` (`{volume}`), `shuffle` (`{value}`), `repeat` (`{value}`). |
+| `command` `{ to, action, args }` | Control another device. Actions: `play`, `pause`, `toggle`, `next`, `prev`, `seek` (`{positionSec}`), `volume` (`{volume}`), `shuffle` (`{value}`), `repeat` (`{value}`), and `shuffleQueue` / `shuffleUpcomingQueue` (reorder the queue on that device; sent by the apps, not offered by the REST API). There is no undo message: while another device plays, undo/redo restore the queue locally and the change reaches the playing device through the shared queue. While a slider is dragged, send at most about 10 volume commands per second (the hub cuts off connections that exceed its message budget). |
 | `transfer` `{ to, fresh? }` | Move playback to a device. Refused with `transfer-failed` / `server_mismatch` when the two devices use different music servers or accounts. Otherwise the current player is asked to `yield` first, and the target only starts after it confirms `ok: true`. `fresh: true` starts the loaded queue from the beginning (here the requester's own queue is the one being moved). |
 | `sync-config` `{ category, enabled }` | Switch a settings category on or off for all devices. |
 
@@ -52,4 +52,4 @@ A failed save or a missing answer cancels the transfer instead of letting the ta
 
 ## Close codes
 
-4001 hello timeout, 4002 bad JSON, 4003 hello first, 4004 unsupported protocol, 4005 unauthorized (also: the web login this socket belongs to was signed out or expired), 4006 bad deviceId, 4007 too many devices, 4008 replaced by a newer connection of the same device.
+4001 hello timeout, 4002 bad JSON, 4003 hello first, 4004 unsupported protocol, 4005 unauthorized (also: the web login this socket belongs to was signed out or expired), 4006 bad deviceId, 4007 too many devices, 4008 replaced by a newer connection of the same device, 4010 too many connections, 4011 this address is locked out after repeated failures, 4012 message rate exceeded (the hub allows about 30 messages per second per connection; a cover image counts as ten).
