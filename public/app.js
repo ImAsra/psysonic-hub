@@ -109,9 +109,33 @@ async function signIn() {
 }
 
 async function signOut() {
-  try { await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch {}
-  if (ws) { ws.onclose = null; ws.close(); }
-  state = null; coverTrack = ''; hideCover();
+  try {
+    const response = await fetch('/auth/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) {
+      throw new Error('Logout failed');
+    }
+  } catch (error) {
+    console.error('Sign out failed:', error);
+    $('loginMsg').textContent = 'Could not sign out. Please try again.';
+    return;
+  }
+
+  if (ws) {
+    ws.onclose = null;
+    ws.close();
+  }
+
+  state = null;
+  coverTrack = '';
+  hideCover();
   setStatus('Not connected');
   showLogin('Signed out.');
 }
