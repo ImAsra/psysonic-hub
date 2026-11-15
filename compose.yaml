@@ -2,9 +2,7 @@
 #   docker compose up -d
 services:
   psysonic-hub:
-    image: ghcr.io/imasra/psysonic-hub:latest # built and published by this repository's workflow
-    # No registry? Build straight from the repository instead (replace the line above):
-    # build: https://github.com/imasra/psysonic-hub.git#main
+    image: ghcr.io/imasra/psysonic-hub:0.2
     container_name: psysonic-hub
     restart: unless-stopped
     env_file: .env
