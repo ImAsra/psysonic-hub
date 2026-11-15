@@ -20,7 +20,6 @@ Then open `http://<server>:5533/` and sign in. In Psysonic, go to **Settings →
 
 Check it is up: `curl http://<server>:5533/health`.
 
-> Replace `OWNER` in `compose.yaml` with the GitHub user or organization that publishes the image. If you would rather not use a registry, the commented `build:` line builds straight from the repository.
 
 ## Configuration (`.env`)
 
@@ -47,12 +46,58 @@ Generate secrets with `openssl rand -hex 24`.
 
 Put the hub behind a reverse proxy with HTTPS (or use a VPN such as WireGuard or Tailscale). Set `HUB_TRUST_PROXY=1` and `HUB_PUBLIC_URL`. The proxy must pass **WebSocket upgrades** and must **not buffer** the event stream (`/api/events`).
 
+### Reverse proxy on the Docker host
+
+If your reverse proxy runs directly on the host, you can publish the hub on loopback only in `compose.yaml`:
+
+```yaml
+ports:
+  - "127.0.0.1:5533:5533"
+```
+
+The proxy can then reach the hub at `127.0.0.1:5533`.
+
+### Reverse proxy in another container
+
+If Caddy, Traefik, or Nginx Proxy Manager runs in Docker, put the hub and proxy on a shared Docker network instead. In this setup, **do not publish a host port** for the hub. Add the following to the hub service in `compose.yaml`:
+
+```yaml
+services:
+  psysonic-hub:
+    # Keep the rest of your existing service configuration.
+    expose:
+      - "5533"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+```
+
+Create the shared network once if it does not already exist:
+
+```sh
+docker network create proxy
+```
+
+Connect your reverse proxy container to the same `proxy` network. Configure the proxy's upstream to use:
+
+```text
+http://psysonic-hub:5533
+```
+
+The `psysonic-hub` hostname is the Compose service name. If your proxy uses a different Docker network, replace `proxy` with that network's name.
+
 Caddy:
 
 ```
 hub.example.com {
     reverse_proxy 127.0.0.1:5533
 }
+```
+
+For a Caddy container on the shared Docker network, use `reverse_proxy psysonic-hub:5533` instead.
 ```
 
 nginx (the relevant parts):
@@ -70,6 +115,8 @@ location / {
     proxy_read_timeout 1h;
 }
 ```
+
+For an nginx container on the shared Docker network, change the upstream to `http://psysonic-hub:5533`.
 
 ## Security
 
@@ -106,4 +153,5 @@ npm test
 
 ## License
 
-Psysonic-hub is licensed under the GNU GPL v3.0
+Psysonic Hub is licensed under the GNU General Public License v3.0.
+See [LICENSE](LICENSE) for the full license text.
