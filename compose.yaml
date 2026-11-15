@@ -1,5 +1,4 @@
 # Psysonic Hub. Put this file and your ".env" (see .env.example) in a folder, then:
-#   docker compose up -d
 services:
   psysonic-hub:
     image: ghcr.io/imasra/psysonic-hub:0.2
@@ -8,12 +7,9 @@ services:
     env_file: .env
     ports:
       - "5533:5533"
-      # Behind a reverse proxy on the same machine? Publish on the loopback interface only,
-      # so the proxy is the single way in (and set HUB_TRUST_PROXY=1 in .env):
-      # - "127.0.0.1:5533:5533"
     volumes:
-      - hubdata:/data # keeps the shared settings across restarts
-    init: true # proper signal handling and zombie reaping
+      - hubdata:/data
+    init: true
     stop_grace_period: 10s
     read_only: true
     tmpfs:
