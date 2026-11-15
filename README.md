@@ -106,4 +106,5 @@ npm test
 
 ## License
 
-Psysonic-hub is licensed under the GNU GPL v3.0
+Psysonic Hub is licensed under the GNU General Public License v3.0.
+See [LICENSE](LICENSE) for the full license text.
