@@ -144,6 +144,29 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   srv.kill();
 }
 
+// ======================= the 5th try still counts; an in-flight check refuses once ANOTHER request locks the address =======================
+{
+  const login = (port, password) => fetch(`http://127.0.0.1:${port}/auth/login`, { method: 'POST', headers: JSON_H, body: JSON.stringify({ user: 'asra', password }) }).then((r) => r.status);
+
+  // (a) four wrong guesses, then the right password as the 5th try: it signs in (the 5th try is a real try)
+  const a = await startHub(5548, { HUB_USER: 'asra', HUB_PASSWORD: PASS });
+  for (let i = 0; i < 4; i++) assert.equal(await login(5548, `wrong-${i}`), 401);
+  assert.equal(await login(5548, PASS), 200, 'the 5th try must not be refused by the lock it starts itself');
+  a.kill();
+
+  // (b) the right password is still being checked when ANOTHER request's 5th guess starts the lock: refused too,
+  // and its late success does not wipe the lock
+  const b = await startHub(5549, { HUB_USER: 'asra', HUB_PASSWORD: PASS });
+  for (let i = 0; i < 3; i++) assert.equal(await login(5549, `wrong-${i}`), 401);
+  const slowRight = login(5549, PASS); // 4th try, running (scrypt takes a while)...
+  await wait(12);
+  const lockingWrong = login(5549, 'wrong-5th'); // ...when the 5th guess starts the lock
+  assert.equal(await lockingWrong, 429);
+  assert.equal(await slowRight, 429, 'an attempt that was in flight when another request locked the address is refused');
+  assert.equal(await login(5549, PASS), 429, 'and the lock is still in place afterwards');
+  b.kill();
+}
+
 // ======================= connection and message limits =======================
 {
   const P = 5564;
