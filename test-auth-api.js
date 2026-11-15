@@ -65,6 +65,12 @@ try {
   const evil = connect(PORT, 'evil-0001', 'Evil', 'desktop', { token: null, headers: { cookie, origin: 'http://evil.example' } });
   await wait();
   assert.equal(evil.closeCode, 4005, 'cross-site WebSocket with a valid cookie is refused');
+  const wrongScheme = connect(PORT, 'wrong-scheme-0001', 'Wrong scheme', 'desktop', {
+    token: null,
+    headers: { cookie, origin: `https://127.0.0.1:${PORT}` },
+  });
+  await wait();
+  assert.equal(wrongScheme.closeCode, 4005, 'wrong-scheme WebSocket origin is refused');
 
   const anon = connect(PORT, 'anon-0001', 'Anon', 'desktop', { token: null });
   await wait();
