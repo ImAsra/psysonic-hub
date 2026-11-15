@@ -106,4 +106,4 @@ npm test
 
 ## License
 
-Not chosen yet. Psysonic itself is GPL-3.0-or-later; matching it keeps the two projects compatible.
+Psysonic-hub is licensed under the GNU GPL v3.0
