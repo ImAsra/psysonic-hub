@@ -8,15 +8,17 @@ import { loadConfig } from './lib/config.js';
 import { createAuth } from './lib/auth.js';
 import { createHub, PROTOCOL } from './lib/core.js';
 import { createApi } from './lib/api.js';
-import { baseHeaders, readJson, sendJson } from './lib/http.js';
+import { BRAND_CSP, baseHeaders, readJson, sendJson, setSecureCheck } from './lib/http.js';
 
-const { cfg, errors } = loadConfig();
+const { cfg, errors, warnings } = loadConfig();
 if (errors.length) {
   for (const e of errors) console.error(e);
   process.exit(1);
 }
+for (const w of warnings) console.warn(`[security] ${w}`);
 
 const auth = createAuth(cfg);
+setSecureCheck(auth.isSecure);
 const hub = createHub({
   dataDir: cfg.dataDir, maxDevices: cfg.maxDevices, serverCheck: cfg.serverCheck, yieldTimeoutMs: cfg.yieldTimeoutMs,
 });
@@ -30,6 +32,8 @@ const PING_MS = 30000;
 // ---- static files: fixed routes only (no filesystem path ever comes from a request) ----
 const readPublic = (f) => fs.readFileSync(new URL(`./public/${f}`, import.meta.url));
 const PAGE = readPublic('index.html');
+const APP_JS = readPublic('app.js');
+const APP_CSS = readPublic('app.css');
 const MANIFEST = JSON.stringify({
   name: 'Psysonic Remote', short_name: 'Remote', start_url: '/', display: 'standalone',
   background_color: '#1e1e2e', theme_color: '#181825',
@@ -42,18 +46,30 @@ const server = http.createServer(async (req, res) => {
   const route = url.pathname;
   try {
     if (req.method === 'GET' && route === '/') {
-      res.writeHead(200, { ...baseHeaders(), 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
+      res.writeHead(200, {
+        ...baseHeaders(req), 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache',
+        'cross-origin-opener-policy': 'same-origin',
+      });
       return res.end(PAGE);
+    }
+    if (req.method === 'GET' && route === '/app.js') {
+      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
+      return res.end(APP_JS);
+    }
+    if (req.method === 'GET' && route === '/app.css') {
+      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' });
+      return res.end(APP_CSS);
     }
     if (req.method === 'GET' && BRAND[route]) {
       return fs.readFile(new URL(`./public${route}`, import.meta.url), (err, data) => {
-        if (err) return res.writeHead(404, baseHeaders()).end();
-        res.writeHead(200, { ...baseHeaders(), 'content-type': BRAND[route], 'cache-control': 'public, max-age=3600' });
+        if (err) return res.writeHead(404, baseHeaders(req)).end();
+        // Sandboxed: even a hostile SVG dropped into ./public could not run script from this origin.
+        res.writeHead(200, { ...baseHeaders(req), 'content-security-policy': BRAND_CSP, 'content-type': BRAND[route], 'cache-control': 'public, max-age=3600' });
         res.end(data);
       });
     }
     if (req.method === 'GET' && route === '/manifest.webmanifest') {
-      res.writeHead(200, { ...baseHeaders(), 'content-type': 'application/manifest+json' });
+      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'application/manifest+json' });
       return res.end(MANIFEST);
     }
     if (req.method === 'GET' && route === '/health') return sendJson(res, 200, { ok: true, protocol: PROTOCOL });
@@ -62,6 +78,11 @@ const server = http.createServer(async (req, res) => {
     if (route === '/auth/config' && req.method === 'GET') return sendJson(res, 200, { mode: auth.mode });
     if (route === '/auth/me' && req.method === 'GET') {
       return auth.sessionFromReq(req) ? sendJson(res, 200, { ok: true }) : sendJson(res, 401, { error: 'unauthorized' });
+    }
+    if (route.startsWith('/auth/') && req.method === 'POST') {
+      // Only this site's own page may sign in or out (no cross-site form posts).
+      const same = auth.sameSitePost(req);
+      if (!same.ok) return sendJson(res, same.status, { error: same.status === 415 ? 'json_required' : 'cross_site_request' });
     }
     if (route === '/auth/login' && req.method === 'POST') {
       if (auth.mode !== 'password') return sendJson(res, 404, { error: 'login_disabled' });
@@ -84,18 +105,51 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (await api.handle(req, res, url)) return;
-    res.writeHead(404, baseHeaders()).end();
+    res.writeHead(404, baseHeaders(req)).end();
   } catch (e) {
     console.error('request failed:', e);
-    if (!res.headersSent) res.writeHead(500, baseHeaders());
+    if (!res.headersSent) res.writeHead(500, baseHeaders(req));
     res.end();
   }
 });
 
+// Slow-loris protection: a request must arrive promptly, idle connections are dropped.
+server.headersTimeout = 10_000;
+server.requestTimeout = 15_000;
+server.keepAliveTimeout = 5_000;
+server.maxHeadersCount = 64;
+
 // ---- WebSocket: the apps (HUB_TOKEN) and the web page (login session) ----
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 2 * 1024 * 1024 }); // room for a cover image
 
+const connsByIp = new Map();
+const MSG_BURST = 100;
+const MSG_PER_MS = 0.03; // sustained 30 messages per second per connection
+
 wss.on('connection', (ws, req) => {
+  const ip = auth.clientIp(req);
+  if (auth.blockedFor(req)) return ws.close(4011, 'rate limited');
+  if (wss.clients.size > cfg.maxConnections || (connsByIp.get(ip) ?? 0) >= cfg.maxConnectionsPerIp) {
+    return ws.close(4010, 'too many connections');
+  }
+  connsByIp.set(ip, (connsByIp.get(ip) ?? 0) + 1);
+  ws.on('close', () => {
+    const n = (connsByIp.get(ip) ?? 1) - 1;
+    if (n <= 0) connsByIp.delete(ip); else connsByIp.set(ip, n);
+  });
+
+  // A connection that floods us gets cut off (a cover image costs as much as ten ordinary messages).
+  let budget = MSG_BURST;
+  let refilled = Date.now();
+  const spend = (cost) => {
+    const now = Date.now();
+    budget = Math.min(MSG_BURST, budget + (now - refilled) * MSG_PER_MS);
+    refilled = now;
+    if (budget < cost) return false;
+    budget -= cost;
+    return true;
+  };
+
   // A browser session counts only for this site's own pages (cross-site WebSocket hijacking guard).
   const sessionId = auth.mode === 'password' ? auth.sessionFromReq(req) : null;
   const sessionOk = !!sessionId && auth.originOk(req);
@@ -107,16 +161,21 @@ wss.on('connection', (ws, req) => {
   const helloTimer = setTimeout(() => ws.close(4001, 'hello timeout'), HELLO_TIMEOUT_MS);
 
   ws.on('message', (raw) => {
+    if (!spend(1)) return ws.close(4012, 'rate limited');
     let m;
     try { m = JSON.parse(raw); } catch { return ws.close(4002, 'bad json'); }
     if (!m || typeof m.t !== 'string') return;
+    if (m.t === 'cover' && !spend(9)) return ws.close(4012, 'rate limited');
 
     // ---- handshake ----
     if (!id) {
       if (m.t !== 'hello') return ws.close(4003, 'hello first');
       if (m.v !== PROTOCOL) return ws.close(4004, 'unsupported protocol');
       const byToken = auth.tokenOk(m.token);
-      if (!byToken && !sessionOk) return ws.close(4005, 'unauthorized');
+      if (!byToken && !sessionOk) {
+        auth.penalize(req, 9); // guessing the token or a session costs attempts, like guessing a password
+        return ws.close(4005, 'unauthorized');
+      }
       if (typeof m.deviceId !== 'string' || !/^[\w-]{4,64}$/.test(m.deviceId)) return ws.close(4006, 'bad deviceId');
       const kind = !byToken ? 'web' : m.kind; // a session login is always a web remote
       const joined = hub.join(m.deviceId, { ws, name: m.name, kind, server: m.server });
@@ -184,7 +243,18 @@ setInterval(() => {
   }
 }, PING_MS).unref();
 
-server.listen(cfg.port, () => {
+// Stop cleanly on `docker stop` / Ctrl+C.
+function shutdown(signal) {
+  console.log(`${signal}: shutting down`);
+  for (const c of wss.clients) c.close(1001, 'server stopping');
+  server.close(() => process.exit(0));
+  server.closeAllConnections?.();
+  setTimeout(() => process.exit(0), 3000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+server.listen(cfg.port, cfg.bind, () => {
   const apiOn = cfg.apiToken || cfg.apiTokenReadonly ? 'tokens set' : 'no tokens (session only)';
   console.log(`psysonic-hub listening on :${cfg.port} (protocol v${PROTOCOL}, web login: ${auth.mode}, api: ${apiOn})`);
 });

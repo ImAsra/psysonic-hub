@@ -238,7 +238,7 @@ const playing = (extra = {}) => ({ t: 'state', state: { trackId: 't1', title: 'T
   const P = 5576;
   const srv = await startHub(P, { HUB_USER: 'asra', HUB_PASSWORD: 'correct-horse-battery' });
   const base = `http://127.0.0.1:${P}`;
-  const login = async () => (await fetch(`${base}/auth/login`, { method: 'POST', body: JSON.stringify({ user: 'asra', password: 'correct-horse-battery' }) })).headers.get('set-cookie').split(';')[0];
+  const login = async () => (await fetch(`${base}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ user: 'asra', password: 'correct-horse-battery' }) })).headers.get('set-cookie').split(';')[0];
   const cookieA = await login();
   const cookieB = await login();
   const player = dev(P, 'dev-p-0005', 'Player');
@@ -248,7 +248,7 @@ const playing = (extra = {}) => ({ t: 'state', state: { trackId: 't1', title: 'T
   await wait(400);
   assert.ok(last(pageA, 'welcome') && last(pageB, 'welcome'));
 
-  await fetch(`${base}/auth/logout`, { method: 'POST', headers: { cookie: cookieA } });
+  await fetch(`${base}/auth/logout`, { method: 'POST', headers: { cookie: cookieA, 'content-type': 'application/json' } });
   await wait(300);
   assert.equal(pageA.closeCode, 4005, 'signing out closes that page\'s socket');
   assert.equal(pageB.closeCode, null, 'another session is untouched');
