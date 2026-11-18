@@ -22,26 +22,53 @@ assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/icon.png`))
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/logo.svg/../server.js`)).status, 404);
 
 const url = `ws://127.0.0.1:${PORT}/ws`;
+
 const connect = (deviceId, name, kind, token = TOKEN) =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
     ws.inbox = [];
+
     ws.on('message', (d) => ws.inbox.push(JSON.parse(d)));
-    ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, token, deviceId, name, kind })));
-    resolve(ws);
+    ws.once('error', reject);
+
+    ws.once('open', () => {
+      ws.closed = new Promise((r) => ws.once('close', r));
+      ws.send(JSON.stringify({ t: 'hello', v: 1, token, deviceId, name, kind }));
+      resolve(ws);
+    });
   });
+
 const wait = (ms = 150) => new Promise((r) => setTimeout(r, ms));
 const last = (ws, t) => [...ws.inbox].reverse().find((m) => m.t === t);
 
+const waitFor = (ws, t) => {
+  const existing = last(ws, t);
+  if (existing) return Promise.resolve(existing);
+
+  return new Promise((resolve) => {
+    const onMessage = () => {
+      const msg = last(ws, t);
+      if (msg) {
+        ws.off('message', onMessage);
+        resolve(msg);
+      }
+    };
+    ws.on('message', onMessage);
+  });
+};
+
 // bad token gets closed
 const bad = await connect('evil-device', 'x', 'phone', 'wrong');
-const code = await new Promise((r) => bad.on('close', r));
+const code = await bad.closed;
 assert.equal(code, 4005);
 
 const desk = await connect('desk-0001', 'Desktop', 'desktop');
+await waitFor(desk, 'welcome');
+
 const phone = await connect('phone-0001', 'Phone', 'phone');
-await wait();
-assert.equal(last(phone, 'welcome').devices.length, 2);
+const phoneWelcome = await waitFor(phone, 'welcome');
+
+assert.equal(phoneWelcome.devices.length, 2);
 
 desk.send(JSON.stringify({ t: 'state', state: { trackId: 'abc', positionMs: 1000, playing: true } }));
 await wait();
