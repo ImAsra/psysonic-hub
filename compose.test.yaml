@@ -1,0 +1,22 @@
+services:
+  psysonic-hub-test:
+    build: .
+    image: psysonic-hub-local:test
+    container_name: psysonic-hub-test
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5534:5533"
+    volumes:
+      - hubdata-test:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+
+volumes:
+  hubdata-test:

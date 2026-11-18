@@ -2,6 +2,50 @@ const $ = (id) => document.getElementById(id);
 const fmt = (s) => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+let currentLocale = store.get('locale') || 'en';
+let translations = {};
+
+async function loadLocale(locale) {
+  try {
+    const response = await fetch(`/locales/${locale}.json`);
+    if (!response.ok) throw new Error('Locale not found');
+
+    translations = await response.json();
+    currentLocale = locale;
+    store.set('locale', locale);
+  } catch (error) {
+    console.error('Could not load locale:', locale, error);
+
+    if (locale !== 'en') {
+      return loadLocale('en');
+    }
+  }
+}
+
+function t(key, replacements = {}) {
+  let value = translations[key] || key;
+
+  for (const [name, replacement] of Object.entries(replacements)) {
+    value = value.replaceAll(`{{${name}}}`, replacement);
+  }
+
+  return value;
+}
+function applyTranslations() {
+  document.documentElement.lang = currentLocale;
+
+  document.querySelectorAll('[data-i18n]').forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
+    element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
+  });
+}
 const deviceId = store.get('deviceId') || ('web-' + Math.random().toString(36).slice(2, 12));
 store.set('deviceId', deviceId);
 
@@ -162,20 +206,31 @@ const activeDev = () => devices.find((d) => d.active);
 function drawDevices() {
   const list = $('devices');
   list.replaceChildren();
+
   for (const d of devices) {
     const b = document.createElement('button');
     b.className = 'dev' + (d.active ? ' active' : '');
     b.innerHTML = (ICON[d.kind] || ICON.desktop) + '<span class="name"></span><span class="chip"></span>';
     b.querySelector('.name').textContent = d.name;
-    b.querySelector('.chip').textContent = d.active ? 'Playing' : '';
-    b.onclick = () => { if (!d.active && ws?.readyState === 1) ws.send(JSON.stringify({ t: 'transfer', to: d.id })); };
+    b.querySelector('.chip').textContent = d.active ? t('devices.playing') : '';
+    b.onclick = () => {
+      if (!d.active && ws?.readyState === 1) {
+        ws.send(JSON.stringify({ t: 'transfer', to: d.id }));
+      }
+    };
     list.appendChild(b);
   }
+
   $('devicesCard').classList.remove('hidden');
-  $('noDevices').textContent = devices.length ? '' : 'No players connected. Open Psysonic on a device with the hub enabled.';
+  $('noDevices').textContent = devices.length ? '' : t('devices.none');
+
   const a = activeDev();
   const on = $('playingOn');
-  on.textContent = a ? '▶ Playing on ' + a.name : (devices.length ? 'No active device. Pick one below.' : '');
+
+  on.textContent = a
+    ? t('devices.playingOn', { name: a.name })
+    : (devices.length ? t('devices.noActive') : '');
+
   on.className = 'on-dev' + (a ? '' : ' none');
   $('main').classList.toggle('controls-off', !a);
 }
@@ -183,17 +238,31 @@ function drawDevices() {
 function drawSync() {
   const list = $('syncList');
   list.replaceChildren();
+
   for (const c of catalog) {
     const row = document.createElement('label');
     row.className = 'sync-row';
     row.innerHTML = '<span class="t"><span class="n"></span><div class="d"></div></span><input type="checkbox" class="switch">';
-    row.querySelector('.n').textContent = c.label;
-    row.querySelector('.d').textContent = c.desc;
+
+    row.querySelector('.n').textContent = t(`sync.${c.id}.label`);
+    row.querySelector('.d').textContent = t(`sync.${c.id}.desc`);
+
     const box = row.querySelector('input');
     box.checked = syncCfg[c.id] === true;
-    box.onchange = () => { if (ws?.readyState === 1) ws.send(JSON.stringify({ t: 'sync-config', category: c.id, enabled: box.checked })); };
+
+    box.onchange = () => {
+      if (ws?.readyState === 1) {
+        ws.send(JSON.stringify({
+          t: 'sync-config',
+          category: c.id,
+          enabled: box.checked
+        }));
+      }
+    };
+
     list.appendChild(row);
   }
+
   $('syncCard').classList.toggle('hidden', catalog.length === 0);
 }
 
@@ -242,4 +311,29 @@ $('vol').oninput = () => {
 };
 $('vol').onchange = () => { sendVolume(); volDragging = false; };
 paint($('seek')); paint($('vol'));
-init();
+async function start() {
+  const languageSelect = $('language');
+
+  await loadLocale(currentLocale);
+  applyTranslations();
+
+  if (languageSelect) {
+    languageSelect.value = currentLocale;
+
+    languageSelect.addEventListener('change', async () => {
+  await loadLocale(languageSelect.value);
+  languageSelect.value = currentLocale;
+  applyTranslations();
+
+  if (ws?.readyState === 1) {
+    drawDevices();
+    drawSync();
+    draw();
+  }
+});
+  }
+
+  await init();
+}
+
+start();

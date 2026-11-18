@@ -11,6 +11,10 @@ await new Promise((r) => srv.stdout.once('data', r));
 const page = await fetch(`http://127.0.0.1:${PORT}/`);
 assert.equal(page.status, 200);
 assert.match(await page.text(), /Psysonic Remote/);
+const locale = await fetch(`http://127.0.0.1:${PORT}/locales/en.json`);
+assert.equal(locale.status, 200);
+assert.equal(locale.headers.get('content-type').split(';')[0], 'application/json');
+assert.equal((await locale.json())['language.en'], 'English');
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/etc/passwd`)).status, 404);
 // branding files are optional: served when present, plain 404 otherwise (never an error)
 assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/logo.svg`)).status));

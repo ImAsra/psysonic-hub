@@ -34,6 +34,16 @@ const readPublic = (f) => fs.readFileSync(new URL(`./public/${f}`, import.meta.u
 const PAGE = readPublic('index.html');
 const APP_JS = readPublic('app.js');
 const APP_CSS = readPublic('app.css');
+const getLocale = (route) => {
+  const match = route.match(/^\/locales\/([a-z]{2}(?:-[A-Z]{2})?)\.json$/);
+  if (!match) return null;
+
+  try {
+    return readPublic(`locales/${match[1]}.json`);
+  } catch {
+    return null;
+  }
+};
 const MANIFEST = JSON.stringify({
   name: 'Psysonic Remote', short_name: 'Remote', start_url: '/', display: 'standalone',
   background_color: '#1e1e2e', theme_color: '#181825',
@@ -60,6 +70,18 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' });
       return res.end(APP_CSS);
     }
+    if (req.method === 'GET') {
+       const locale = getLocale(route);
+
+        if (locale) {
+          res.writeHead(200, {
+            ...baseHeaders(req),
+            'content-type': 'application/json; charset=utf-8',
+            'cache-control': 'no-cache',
+          });
+          return res.end(locale);
+        }
+      }
     if (req.method === 'GET' && BRAND[route]) {
       return fs.readFile(new URL(`./public${route}`, import.meta.url), (err, data) => {
         if (err) return res.writeHead(404, baseHeaders(req)).end();
