@@ -144,15 +144,22 @@
   .vol svg { flex: none; width: 20px; height: 20px; }
   .vol input { margin: 8px 0; }
 
-  /* devices */
-  .dev { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 10px; margin-top: 6px; border: 0; cursor: pointer;
-    border-radius: var(--radius-sm); font: inherit; text-align: left; color: var(--text); background: transparent; transition: background .15s; }
+  /* devices — each connected player is a tile in a responsive grid */
+  /* auto-fit: 1 player = one wide tile, 2+ = two columns (one column on phones); a lone last tile spans the row.
+     The list has a max height and scrolls inside the card instead of growing the page. */
+  #devices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;
+    max-height: min(60vh, 480px); overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: var(--bg-hover) transparent;
+    padding: 4px; margin: 8px -4px 0; /* room so focus rings aren't clipped by the scroll box */ }
+  #devices > .dev:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .dev { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 84px; padding: 16px; margin: 0; cursor: pointer;
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font: inherit; text-align: left; color: var(--text);
+    background: var(--bg-sidebar); transition: background .15s, border-color .15s; }
   .dev:hover { background: var(--bg-hover); }
-  .dev.active { color: var(--accent); background: var(--accent-dim); font-weight: 700; }
-  .dev svg { flex: none; width: 22px; height: 22px; }
+  .dev.active { color: var(--accent); background: var(--accent-dim); border-color: var(--accent); font-weight: 700; }
+  .dev svg { flex: none; width: 26px; height: 26px; }
   .dev .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dev .chip { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-  #devices { margin-top: 8px; }
 
   /* settings sync */
   details.card > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
@@ -173,7 +180,7 @@
   @media (max-width: 400px) { .tag { display: none; } }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-  /* desktop: use the whole page — left = player, right = devices + settings sync.
+  /* desktop: use the whole page — left = player + connected devices, right = settings sync.
      Below 900px the single-column mobile layout above is used unchanged. */
   @media (min-width: 900px) {
     body { padding-left: 32px; padding-right: 32px; }
@@ -181,6 +188,7 @@
       max-width: 1200px;
       display: grid;
       grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      grid-template-rows: auto auto 1fr auto;   /* row 3 absorbs the extra height of the tall settings card */
       column-gap: 20px;
       align-items: start;
     }
@@ -190,9 +198,9 @@
 
     #login { grid-column: 1 / -1; grid-row: 2; justify-self: center; width: 100%; max-width: 440px; }
 
-    #main { grid-column: 1; grid-row: 2 / span 2; position: sticky; top: 16px; padding: 28px; }
-    #devicesCard { grid-column: 2; grid-row: 2; }
-    #syncCard { grid-column: 2; grid-row: 3; }
+    #main { grid-column: 1; grid-row: 2; padding: 28px; }
+    #devicesCard { grid-column: 1; grid-row: 3; align-self: stretch; }   /* fills the left column down to the settings card */
+    #syncCard { grid-column: 2; grid-row: 2 / span 2; }
 
     .art { width: 120px; height: 120px; border-radius: 18px; }
     .art svg { width: 48px; height: 48px; }
@@ -204,4 +212,3 @@
   .gap-top { margin-top: 12px; }
   .gap-top-sm { margin-top: 8px; }
   .sync-intro { margin: 10px 0 6px; }
-  
