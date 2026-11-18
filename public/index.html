@@ -1,4 +1,5 @@
 
+ 
 <!doctype html>
 <html lang="en">
 <head>
@@ -19,7 +20,7 @@
       <span id="brandName" class="brand-name">Psysonic</span>
       <span class="tag" data-i18n="app.remote">Remote</span>
     </div>
-
+ 
     <label class="language-picker">
       <span class="sr-only" data-i18n="language.label">Language</span>
       <select id="language">
@@ -29,35 +30,35 @@
         <option value="nl">Nederlands</option>
       </select>
     </label>
-
+ 
     <span id="status" class="pill">
       <span class="dot"></span>
       <span id="statusText" data-i18n="status.notConnected">Not connected</span>
     </span>
-
+ 
     <button id="logout" class="link-btn hidden" type="button" data-i18n="login.signOut">Sign out</button>
   </header>
-
+ 
   <section id="login" class="card hidden">
     <form id="loginForm" autocomplete="on">
       <div id="pwForm" class="hidden">
         <label class="field" for="user" data-i18n="login.username">Username</label>
         <input id="user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false">
-
+ 
         <label class="field gap-top" for="pass" data-i18n="login.password">Password</label>
         <input id="pass" type="password" autocomplete="current-password">
       </div>
-
+ 
       <div id="tokenForm" class="hidden">
         <label class="field" for="token" data-i18n="login.hubToken">Hub token</label>
         <input id="token" type="password" autocomplete="off" placeholder="HUB_TOKEN">
       </div>
-
+ 
       <div id="loginMsg" class="msg" role="alert"></div>
       <button id="connect" class="btn block" type="submit" data-i18n="login.signIn">Sign in</button>
     </form>
   </section>
-
+ 
   <section id="main" class="card hidden">
     <div class="np">
       <div class="art" aria-hidden="true">
@@ -66,29 +67,29 @@
         </svg>
         <img id="cover" class="cover hidden" alt="">
       </div>
-
+ 
       <div class="meta">
         <div class="title" id="title" data-i18n="player.nothingPlaying">Nothing playing</div>
         <div class="artist" id="artist">&nbsp;</div>
         <div class="on-dev none" id="playingOn"></div>
       </div>
     </div>
-
+ 
     <input type="range" id="seek" min="0" max="1" step="1" value="0"
       aria-label="Seek" data-i18n-aria-label="player.seek">
-
+ 
     <div class="times">
       <span id="pos">0:00</span>
       <span id="dur">0:00</span>
     </div>
-
+ 
     <div class="transport">
       <button class="icon-btn" id="prev" aria-label="Previous" data-i18n-aria-label="player.previous">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M6 6h2v12H6zM9.5 12 18 18V6z"/>
         </svg>
       </button>
-
+ 
       <button class="icon-btn main" id="toggle" aria-label="Play or pause" data-i18n-aria-label="player.toggle">
         <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5v14l11-7z"/>
@@ -97,14 +98,14 @@
           <path d="M6 5h4v14H6zm8 0h4v14h-4z"/>
         </svg>
       </button>
-
+ 
       <button class="icon-btn" id="next" aria-label="Next" data-i18n-aria-label="player.next">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/>
         </svg>
       </button>
     </div>
-
+ 
     <div class="vol">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/>
@@ -113,24 +114,25 @@
         aria-label="Volume" data-i18n-aria-label="player.volume">
     </div>
   </section>
-
+ 
   <section id="devicesCard" class="card hidden">
     <h2 data-i18n="devices.playOn">Play on</h2>
     <div id="devices"></div>
     <div class="sub gap-top-sm" id="noDevices"></div>
   </section>
-
-  <details id="syncCard" class="card hidden">
+ 
+  <details id="syncCard" class="card hidden" open>
     <summary data-i18n="settings.sync">Settings sync</summary>
     <div class="sub sync-intro" data-i18n="settings.syncIntro">
       Choose what is kept identical on all your devices. Changes apply to every device.
     </div>
     <div id="syncList"></div>
   </details>
-
+ 
   <footer data-i18n="footer">Self-hosted · your music, your devices</footer>
 </main>
-
+ 
 <script src="/app.js"></script>
 </body>
 </html>
+ 
