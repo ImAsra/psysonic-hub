@@ -41,5 +41,11 @@
   "sync.eq.label": "Ecualizador",
   "sync.eq.desc": "Bandas, preamplificación y ajustes personalizados del ecualizador",
   "sync.keybindings.label": "Atajos de teclado",
-  "sync.keybindings.desc": "Atajos de teclado dentro de la aplicación"
+  "sync.keybindings.desc": "Atajos de teclado dentro de la aplicación",
+  "player.seek": "Buscar",
+  "player.previous": "Pista anterior",
+  "player.toggle": "Reproducir o pausar",
+  "player.next": "Pista siguiente",
+  "player.volume": "Volumen",
+  "devices.playingOn": "Reproduciendo en {{name}}"
 }

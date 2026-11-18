@@ -41,5 +41,11 @@
   "sync.eq.label": "Equalizer",
   "sync.eq.desc": "Frequenzbänder, Vorverstärkung und benutzerdefinierte Equalizer-Voreinstellungen",
   "sync.keybindings.label": "Tastenkürzel in der App",
-  "sync.keybindings.desc": "Tastenkombinationen innerhalb der App"
+  "sync.keybindings.desc": "Tastenkombinationen innerhalb der App",
+  "player.seek": "Wiedergabeposition",
+  "player.previous": "Vorheriger Titel",
+  "player.toggle": "Wiedergeben oder pausieren",
+  "player.next": "Nächster Titel",
+  "player.volume": "Lautstärke",
+  "devices.playingOn": "Wiedergabe auf {{name}}"
 }

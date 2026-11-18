@@ -40,5 +40,11 @@
   "sync.eq.label": "Equalizer",
   "sync.eq.desc": "Frequentiebanden, voorversterking en aangepaste equalizerpresets",
   "sync.keybindings.label": "Sneltoetsen in de app",
-  "sync.keybindings.desc": "Sneltoetsen binnen de app"
+  "sync.keybindings.desc": "Sneltoetsen binnen de app",
+  "player.seek": "Afspeelpositie",
+  "player.previous": "Vorig nummer",
+  "player.toggle": "Afspelen of pauzeren",
+  "player.next": "Volgend nummer",
+  "player.volume": "Volume",
+  "devices.playingOn": "Speelt af op {{name}}"
 }

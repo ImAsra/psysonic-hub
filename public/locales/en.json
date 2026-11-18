@@ -40,5 +40,11 @@
   "sync.eq.label": "Equalizer",
   "sync.eq.desc": "Bands, pre-gain and custom equalizer presets",
   "sync.keybindings.label": "In-app keybindings",
-  "sync.keybindings.desc": "Keyboard shortcuts inside the app"
+  "sync.keybindings.desc": "Keyboard shortcuts inside the app",
+  "player.seek": "Seek",
+  "player.previous": "Previous track",
+  "player.toggle": "Play or pause",
+  "player.next": "Next track",
+  "player.volume": "Volume",
+  "devices.playingOn": "Playing on {{name}}"
 }
