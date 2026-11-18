@@ -1,4 +1,4 @@
-  /* Colors follow Psysonic's default theme (Catppuccin Mocha); light mode uses Latte. */
+/* Colors follow Psysonic's default theme (Catppuccin Mocha); light mode uses Latte. */
   :root {
     color-scheme: dark light;
     --bg-app: #1e1e2e; --bg-sidebar: #181825; --bg-card: #313244; --bg-hover: #45475a; --bg-deep: #11111b;
@@ -28,10 +28,13 @@
   }
   main { max-width: 520px; margin: 0 auto; }
 
-  /* header / brand */
-  header { display: flex; align-items: center; gap: 12px; padding: 22px 2px 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  /* header / brand
+     Mobile: brand gets its own row, the language picker / status / sign-out wrap underneath.
+     The logo and tag never shrink, so long localized labels can't squeeze them. */
+  header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; padding: 22px 2px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; flex: 1 1 100%; min-width: 0; }
   .logo {
+    flex: none;
     display: none; width: 168px; max-width: 55vw; aspect-ratio: 594.45 / 134.93;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     -webkit-mask: url(/logo.svg) left center / contain no-repeat; mask: url(/logo.svg) left center / contain no-repeat;
@@ -40,7 +43,7 @@
   .brand-name { font-weight: 800; font-size: 22px; letter-spacing: .2px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .brand-name.hidden { display: none; }
-  .tag { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  .tag { flex: none; white-space: nowrap; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
     border: 1px solid var(--border); border-radius: 99px; padding: 2px 8px; }
   .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
     background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 99px; padding: 4px 10px; white-space: nowrap; }
@@ -59,11 +62,11 @@
     outline: none;
   }
   @media (forced-colors: active) {
-  .language-picker select:focus {
-    outline: 2px solid Highlight;
-    outline-offset: 2px;
+    .language-picker select:focus {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+    }
   }
-}
   .sr-only {
     position: absolute;
     width: 1px;
@@ -87,7 +90,7 @@
   .sub { color: var(--muted); font-size: 14px; }
 
   .link-btn { font: inherit; font-size: 12px; font-weight: 700; color: var(--muted); background: transparent; border: 1px solid var(--border);
-    border-radius: 99px; padding: 4px 10px; cursor: pointer; }
+    border-radius: 99px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
   .link-btn:hover { color: var(--text); border-color: var(--accent); }
   .msg { min-height: 1.3em; margin-top: 10px; font-size: 13px; color: var(--danger); }
   .art { position: relative; overflow: hidden; }
@@ -169,6 +172,33 @@
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 0; }
   @media (max-width: 400px) { .tag { display: none; } }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* desktop: use the whole page — left = player, right = devices + settings sync.
+     Below 900px the single-column mobile layout above is used unchanged. */
+  @media (min-width: 900px) {
+    body { padding-left: 32px; padding-right: 32px; }
+    main {
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      column-gap: 20px;
+      align-items: start;
+    }
+    header { grid-column: 1 / -1; grid-row: 1; flex-wrap: nowrap; }
+    .brand { flex: 1; }
+    footer { grid-column: 1 / -1; grid-row: 4; }
+
+    #login { grid-column: 1 / -1; grid-row: 2; justify-self: center; width: 100%; max-width: 440px; }
+
+    #main { grid-column: 1; grid-row: 2 / span 2; position: sticky; top: 16px; padding: 28px; }
+    #devicesCard { grid-column: 2; grid-row: 2; }
+    #syncCard { grid-column: 2; grid-row: 3; }
+
+    .art { width: 120px; height: 120px; border-radius: 18px; }
+    .art svg { width: 48px; height: 48px; }
+    .title { font-size: 24px; }
+    .transport { gap: 26px; margin-top: 22px; }
+  }
 
   /* spacing helpers (replace former inline styles; the page runs without inline style/script) */
   .gap-top { margin-top: 12px; }
