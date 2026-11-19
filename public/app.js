@@ -1,4 +1,3 @@
-
 const $ = (id) => document.getElementById(id);
 const fmt = (s) => {
   s = Math.max(0, Math.round(s || 0));
@@ -246,7 +245,7 @@ function connect() {
     v: 1,
     token,
     deviceId,
-    name: 'Phone remote',
+    name: 'psysonic-hub',
     kind: 'web'
   }));
 
@@ -581,6 +580,16 @@ $('vol').onchange = () => {
 
 paint($('seek'));
 paint($('vol'));
+
+// Remember whether the Settings sync card is collapsed (per browser).
+const SYNC_OPEN_KEY = 'psysonic-hub:syncOpen';
+{
+  const card = $('syncCard');
+  const saved = store.get(SYNC_OPEN_KEY);
+  if (saved === '0') card.open = false;
+  else if (saved === '1') card.open = true;
+  card.addEventListener('toggle', () => store.set(SYNC_OPEN_KEY, card.open ? '1' : '0'));
+}
 
 async function start() {
   const languageSelect = $('language');
