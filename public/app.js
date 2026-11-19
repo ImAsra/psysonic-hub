@@ -245,7 +245,7 @@ function connect() {
     v: 1,
     token,
     deviceId,
-    name: 'Phone remote',
+    name: 'psysonic-hub',
     kind: 'web'
   }));
 
