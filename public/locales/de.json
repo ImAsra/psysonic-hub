@@ -1,6 +1,6 @@
 
 {
-  "app.remote": "Fernsteuerung",
+  "app.remote": "Hub",
   "status.notConnected": "Nicht verbunden",
   "status.connecting": "Verbindung wird hergestellt…",
   "status.connected": "Verbunden",
@@ -21,7 +21,7 @@
   "login.wrongToken": "Falscher Token.",
   "login.signedOut": "Abgemeldet.",
   "devices.playOn": "Wiedergeben auf",
-  "devices.playing": "Wiedergabe läuft",
+  "devices.playing": "Ausgewählt",
   "devices.none": "Keine Wiedergabegeräte verbunden. Öffne Psysonic auf einem Gerät, auf dem der Hub aktiviert ist.",
   "devices.noActive": "Kein aktives Gerät. Wähle unten eines aus.",
   "player.nothingPlaying": "Keine Wiedergabe",
