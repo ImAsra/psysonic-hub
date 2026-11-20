@@ -1,5 +1,5 @@
 {
-  "app.remote": "Afstandsbediening",
+  "app.remote": "Hub",
   "status.notConnected": "Niet verbonden",
   "status.connecting": "Verbinden…",
   "status.connected": "Verbonden",
@@ -20,7 +20,7 @@
   "login.wrongToken": "Ongeldige token.",
   "login.signedOut": "Uitgelogd.",
   "devices.playOn": "Afspelen op",
-  "devices.playing": "Speelt af",
+  "devices.playing": "Geselecteerd",
   "devices.none": "Geen spelers verbonden. Open Psysonic op een apparaat waarop de Hub is ingeschakeld.",
   "devices.noActive": "Geen actief apparaat. Kies er hieronder een.",
   "player.nothingPlaying": "Er wordt niets afgespeeld",

@@ -1,5 +1,5 @@
 {
-  "app.remote": "Control remoto",
+  "app.remote": "Hub",
   "status.notConnected": "Desconectado",
   "status.connecting": "Conectando…",
   "status.connected": "Conectado",
@@ -20,7 +20,7 @@
   "login.wrongToken": "Token incorrecto.",
   "login.signedOut": "Sesión cerrada.",
   "devices.playOn": "Reproducir en",
-  "devices.playing": "Reproduciendo",
+  "devices.playing": "Seleccionado",
   "devices.none": "No hay reproductores conectados. Abre Psysonic en un dispositivo con el Hub habilitado.",
   "devices.noActive": "No hay ningún dispositivo activo. Selecciona uno abajo.",
   "player.nothingPlaying": "Nada reproduciéndose",

@@ -1,5 +1,5 @@
 {
-  "app.remote": "Remote",
+  "app.remote": "Hub",
   "status.notConnected": "Not connected",
   "status.connecting": "Connecting…",
   "status.connected": "Connected",
@@ -20,7 +20,7 @@
   "login.wrongToken": "Wrong token.",
   "login.signedOut": "Signed out.",
   "devices.playOn": "Play on",
-  "devices.playing": "Playing",
+  "devices.playing": "Selected",
   "devices.none": "No players connected. Open Psysonic on a device with the hub enabled.",
   "devices.noActive": "No active device. Pick one below.",
   "player.nothingPlaying": "Nothing playing",
