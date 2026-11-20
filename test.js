@@ -10,7 +10,7 @@ await new Promise((r) => srv.stdout.once('data', r));
 
 const page = await fetch(`http://127.0.0.1:${PORT}/`);
 assert.equal(page.status, 200);
-assert.match(await page.text(), /Psysonic Remote/);
+assert.match(await page.text(), /Psysonic Hub/);
 const locale = await fetch(`http://127.0.0.1:${PORT}/locales/en.json`);
 assert.equal(locale.status, 200);
 assert.equal(locale.headers.get('content-type').split(';')[0], 'application/json');
