@@ -137,7 +137,15 @@ export const useLibraryStore = create<LibraryState>()((set, get) => {
       await get().open({ kind: 'search', query: q }, false);
     },
     followPlayer(playerId) {
-      if (!playerId || playerId === get().playerId) return;
+      if (playerId === get().playerId) return;
+
+      if (!playerId) {
+        // No player: drop what is still loading, and reload when one comes back, even the same one.
+        requestSeq++;
+        set({ playerId: '', loading: false, message: '' });
+        return;
+      }
+
       set({ playerId, stack: [] });
       void get().showTab(get().tab);
     },

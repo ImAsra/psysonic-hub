@@ -82,6 +82,30 @@ describe('library browsing', () => {
   });
 });
 
+describe('the library player going away', () => {
+  beforeEach(() => {
+    browse.mockReset();
+    useHubStore.setState({ devices: [{ id: 'desk', name: 'Desk', kind: 'desktop', active: true, server: [] }] });
+    useLibraryStore.setState({ playerId: 'desk', view: { kind: 'tab' }, stack: [], result: null, message: '' });
+  });
+
+  it('a lookup answered after the player left is dropped, and the same player coming back reloads', async () => {
+    let answerLate!: (v: unknown) => void;
+    browse.mockReturnValueOnce(new Promise((r) => (answerLate = r)));
+    const pending = useLibraryStore.getState().open({ kind: 'album', id: 'al1' });
+
+    useLibraryStore.getState().followPlayer('');
+    answerLate({ error: 'player_left' });
+    await pending;
+    expect(useLibraryStore.getState().message).toBe('');
+
+    browse.mockResolvedValueOnce({ result: { albums: albums(0, 3) } });
+    useLibraryStore.getState().followPlayer('desk');
+    await vi.waitFor(() => expect(useLibraryStore.getState().result?.albums).toHaveLength(3));
+    expect(useLibraryStore.getState().message).toBe('');
+  });
+});
+
 describe('library helpers', () => {
   it('a tab page asks for its own kind of list', () => {
     expect(tabRequest('albums', 'recent', 40)).toEqual({ kind: 'albums', sort: 'recent', offset: 40 });
