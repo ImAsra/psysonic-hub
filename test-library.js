@@ -59,6 +59,12 @@ send(late, { t: 'queue', queue: { index: 0, offset: 0, total: 1, tracks: [{ id: 
 await wait();
 assert.equal(last(remote, 'queue'), undefined);
 
+// a bad entry ends the window: later tracks are never shifted onto the wrong position
+send(desk, { t: 'queue', queue: { index: 0, offset: 10, total: 20, tracks: [{ id: 'a' }, { nope: 1 }, { id: 'c' }] } });
+await wait();
+assert.deepEqual(last(remote, 'queue').queue.tracks.map((t) => t.id), ['a']);
+assert.equal(last(remote, 'queue').queue.offset, 10);
+
 // ---- browse ----
 // the request reaches the player reduced to known fields; the answer goes back to whoever asked
 send(remote, { t: 'browse', to: 'desk-0001', rid: 'r1', req: { kind: 'album', id: 'al-1', extra: 'dropped' } });
@@ -66,8 +72,9 @@ await wait();
 const asked = last(desk, 'browse');
 assert.deepEqual(asked.req, { kind: 'album', id: 'al-1' });
 assert.equal(asked.from, 'remote-01');
+assert.notEqual(asked.rid, 'r1', 'the player gets a relay id, not the remote\'s own');
 send(desk, {
-  t: 'browse-result', rid: 'r1',
+  t: 'browse-result', rid: asked.rid,
   result: { item: { id: 'al-1', name: 'Album', password: 'x' }, songs: [{ id: 's1', title: 'Song' }], junk: [1] },
 });
 await wait();
@@ -82,13 +89,27 @@ assert.equal(answer.result.songs[0].title, 'Song');
 late.inbox.length = 0;
 send(late, { t: 'browse', to: 'desk-0001', rid: 'r2', req: { kind: 'playlists' } });
 await wait();
-send(remote, { t: 'browse-result', rid: 'r2', result: { playlists: [{ id: 'fake' }] } });
+const relay2 = last(desk, 'browse').rid;
+send(remote, { t: 'browse-result', rid: relay2, result: { playlists: [{ id: 'fake' }] } });
 await wait();
 assert.equal(last(late, 'browse-result'), undefined, 'a device that was not asked cannot answer');
-send(desk, { t: 'browse-result', rid: 'r2', result: { playlists: [{ id: 'p1' }] } });
-send(desk, { t: 'browse-result', rid: 'r2', result: { playlists: [{ id: 'twice' }] } });
+send(desk, { t: 'browse-result', rid: relay2, result: { playlists: [{ id: 'p1' }] } });
+send(desk, { t: 'browse-result', rid: relay2, result: { playlists: [{ id: 'twice' }] } });
 await wait();
 assert.deepEqual(late.inbox.filter((m) => m.t === 'browse-result').map((m) => m.result.playlists[0].id), ['p1']);
+assert.equal(last(late, 'browse-result').rid, 'r2', 'the answer carries the remote\'s own id');
+
+// two remotes may use the same request id: each gets its own answer
+remote.inbox.length = 0; late.inbox.length = 0; desk.inbox.length = 0;
+send(remote, { t: 'browse', to: 'desk-0001', rid: 'same', req: { kind: 'playlists' } });
+send(late, { t: 'browse', to: 'desk-0001', rid: 'same', req: { kind: 'artists', offset: 0 } });
+await wait();
+const asks = desk.inbox.filter((m) => m.t === 'browse');
+assert.equal(asks.length, 2, 'neither request was refused as busy');
+for (const a of asks) send(desk, { t: 'browse-result', rid: a.rid, result: { playlists: [{ id: a.from }] } });
+await wait();
+assert.equal(last(remote, 'browse-result').result.playlists[0].id, 'remote-01');
+assert.equal(last(late, 'browse-result').result.playlists[0].id, 'late-0001');
 
 // invalid requests are refused straight away
 remote.inbox.length = 0;
@@ -139,6 +160,28 @@ assert.equal(artAsked, 1, 'the same artwork at the same size comes from the cach
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/api/art?id=none`, { headers: auth })).status, 404);
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/api/art?id=fake`, { headers: auth })).status, 404, 'not an image');
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/api/art?id=al-1`)).status, 401, 'needs credentials');
+
+// a player on another music server has its own artwork: the same cover id is asked for again, from it
+const other = await new Promise((resolve) => {
+  const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws`);
+  ws.once('open', () => {
+    ws.send(JSON.stringify({ t: 'hello', v: 1, token: TOKEN, deviceId: 'desk-other', name: 'other', kind: 'desktop', server: ['bbbbbbbb'] }));
+    resolve(ws);
+  });
+});
+let otherAsked = 0;
+other.on('message', (d) => {
+  const m = JSON.parse(d);
+  if (m.t !== 'art-request') return;
+  otherAsked++;
+  send(other, { t: 'art', rid: m.rid, mime: 'image/jpeg', data: Buffer.concat([JPEG, Buffer.from([7])]).toString('base64') });
+});
+await wait();
+send(other, { t: 'state', state: { trackId: 'x', playing: true } }); // the active player answers art requests
+await wait();
+const fromOther = await fetch(`http://127.0.0.1:${PORT}/api/art?id=al-1&size=150`, { headers: auth });
+assert.equal(otherAsked, 1, 'another library does not reuse the first one\'s cached image');
+assert.equal(Buffer.from(await fromOther.arrayBuffer()).length, JPEG.length + 1);
 
 console.log('library tests passed');
 srv.kill();

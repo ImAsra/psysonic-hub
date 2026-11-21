@@ -140,7 +140,10 @@ function row({ num, l1, l2, dur, coverArt, round, cls, onClick, onAdd }) {
     b.appendChild(add);
   }
   b.onclick = onClick;
-  b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } };
+  b.onkeydown = (e) => {
+    if (e.target !== e.currentTarget) return; // a key on the + button belongs to that button
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }
+  };
   return b;
 }
 
@@ -231,6 +234,7 @@ function refreshLibraryCard() {
   if (libLoadedFor !== player.id) {
     libLoadedFor = player.id;
     libStack.length = 0;
+    libView = null;
     showTab(libTab);
   }
 }
@@ -254,7 +258,15 @@ function errorKey(r) {
   return r.error === 'no_player' ? 'library.noPlayer' : r.error === 'timeout' ? 'library.timeout' : 'library.failed';
 }
 
+// Every navigation (tab, sort, detail, search, player change) gets a number; an answer that comes back
+// after the user moved on belongs to an older one and is dropped.
+let navGen = 0;
+let loadingMore = false;
+
 async function showTab(tab) {
+  navGen++;
+  loadingMore = false;
+  $('libMore').disabled = false;
   libTab = tab;
   store.set('libTab', tab);
   libStack.length = 0;
@@ -269,12 +281,22 @@ async function showTab(tab) {
 }
 
 async function loadPage(append) {
+  if (append && loadingMore) return; // one page at a time, or two would load the same offset
+  const gen = navGen;
   const req = libTab === 'albums'
     ? { kind: 'albums', sort: albumSort, offset: libOffset }
     : libTab === 'artists' ? { kind: 'artists', offset: libOffset } : { kind: 'playlists' };
+  if (append) {
+    loadingMore = true;
+    $('libMore').disabled = true;
+  }
   setMsg('library.loading');
   const r = await browse(req);
-  if (libView || libTab !== tabOf(req)) return; // the user moved on meanwhile
+  if (gen !== navGen) return; // the user moved on meanwhile
+  if (append) {
+    loadingMore = false;
+    $('libMore').disabled = false;
+  }
   if (r.error) return setMsg(errorKey(r));
   setMsg('');
   const body = $('libBody');
@@ -350,6 +372,7 @@ function songRows(songs, onPlay, withAlbum) {
 }
 
 async function openDetail(req, fromBack = false) {
+  const gen = ++navGen;
   if (!fromBack && libView) libStack.push(libView);
   libView = { ...req };
   setViewClass('detail');
@@ -362,7 +385,7 @@ async function openDetail(req, fromBack = false) {
   $('libBody').replaceChildren();
   setMsg('library.loading');
   const r = await browse(req);
-  if (libView?.id !== req.id) return; // the user moved on meanwhile
+  if (gen !== navGen) return; // the user moved on meanwhile
   if (r.error) return setMsg(errorKey(r));
   setMsg('');
   const res = r.result || {};
@@ -381,6 +404,7 @@ async function openDetail(req, fromBack = false) {
 }
 
 async function runSearch(query) {
+  const gen = ++navGen;
   libStack.length = 0;
   libView = { kind: 'search', id: query };
   setViewClass('search');
@@ -389,7 +413,7 @@ async function runSearch(query) {
   $('libBody').replaceChildren();
   setMsg('library.loading');
   const r = await browse({ kind: 'search', query });
-  if (libView?.id !== query) return;
+  if (gen !== navGen) return;
   if (r.error) return setMsg(errorKey(r));
   const res = r.result || {};
   const body = $('libBody');

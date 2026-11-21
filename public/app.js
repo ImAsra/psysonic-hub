@@ -652,7 +652,9 @@ async function start() {
   await init();
 }
 
-start();
+// Only once library.js (loaded after this file) has run too: start() can reach functions it defines.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
 
 // Installed web app: keeps the page available while the hub is unreachable (needs https or localhost).
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
