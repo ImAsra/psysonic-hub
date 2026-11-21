@@ -51,7 +51,7 @@ function hideLibraryCards() {
 // ---------------------------------------------------------------------------
 // artwork: fetched lazily (token mode needs the Authorization header, so no plain <img src>)
 // ---------------------------------------------------------------------------
-const artUrls = new Map(); // "size:coverArt" -> object URL
+const artUrls = new Map(); // "player|size:coverArt" -> object URL
 const artObserver = 'IntersectionObserver' in window
   ? new IntersectionObserver((entries) => {
     for (const e of entries) {
@@ -62,19 +62,23 @@ const artObserver = 'IntersectionObserver' in window
   }, { rootMargin: '200px' })
   : null;
 
+// Cached per player: the same cover id from another player's library is another image.
+const artKey = (img) => img.dataset.player + '|' + img.dataset.size + ':' + img.dataset.art;
+
 function art(img, coverArt, size) {
   img.alt = '';
   if (!coverArt) return;
   img.dataset.art = coverArt;
   img.dataset.size = String(size);
-  const known = artUrls.get(size + ':' + coverArt);
+  img.dataset.player = libraryPlayer()?.id || '';
+  const known = artUrls.get(artKey(img));
   if (known) img.src = known;
   else if (artObserver) artObserver.observe(img);
   else loadArt(img);
 }
 
 async function loadArt(img) {
-  const key = img.dataset.size + ':' + img.dataset.art;
+  const key = artKey(img); // fixed when the request starts, so a late answer stays with its player
   if (artUrls.has(key)) {
     img.src = artUrls.get(key);
     return;
@@ -87,7 +91,7 @@ async function loadArt(img) {
     if (!r.ok) return;
     const url = URL.createObjectURL(await r.blob());
     artUrls.set(key, url);
-    if (img.dataset.size + ':' + img.dataset.art === key) img.src = url;
+    if (artKey(img) === key) img.src = url;
   } catch { /* no artwork is fine */ }
 }
 
