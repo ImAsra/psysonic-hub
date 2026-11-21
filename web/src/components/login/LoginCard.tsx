@@ -73,9 +73,11 @@ export function LoginCard() {
         <div className="msg" role="alert">
           {error || message}
         </div>
-        <button className="btn block" type="submit" disabled={busy}>
-          {t('login.signIn')}
-        </button>
+        {mode && (
+          <button className="btn block" type="submit" disabled={busy}>
+            {t('login.signIn')}
+          </button>
+        )}
       </form>
     </section>
   );
