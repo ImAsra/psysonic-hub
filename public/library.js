@@ -232,7 +232,13 @@ function playItem(kind, id, mode, index) {
 function refreshLibraryCard() {
   const card = $('libraryCard');
   const player = libraryPlayer();
-  if (!player || ws?.readyState !== 1) return card.classList.add('hidden');
+  if (!player || ws?.readyState !== 1) {
+    // No player (or no connection): drop whatever is still loading, and reload when one comes back,
+    // even the same one, instead of showing what the old request left behind.
+    navGen++;
+    libLoadedFor = '';
+    return card.classList.add('hidden');
+  }
   card.classList.remove('hidden');
   // First time, or the player that answers changed: load the top level again.
   if (libLoadedFor !== player.id) {
