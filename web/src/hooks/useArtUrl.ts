@@ -1,6 +1,7 @@
 import { type RefObject, useEffect, useState } from 'react';
 
 import { artUrl, cachedArtUrl } from '../api/artUrl.ts';
+import { useLibraryStore } from '../store/useLibraryStore.ts';
 
 /** Library artwork for an element, loaded once it scrolls near the screen. */
 export function useArtUrl(
@@ -8,16 +9,18 @@ export function useArtUrl(
   coverArt: string | undefined,
   size: number,
 ): string | undefined {
-  const key = coverArt ? `${size}:${coverArt}` : '';
+  // The library's player: artwork is cached per player (see artUrl).
+  const player = useLibraryStore((s) => s.playerId);
+  const key = coverArt ? `${player}|${size}:${coverArt}` : '';
   // The last artwork this element loaded, with the cover it belongs to (a stale one is not shown).
   const [loaded, setLoaded] = useState<{ key: string; url: string }>();
 
   useEffect(() => {
-    if (!coverArt || cachedArtUrl(coverArt, size)) return;
+    if (!coverArt || cachedArtUrl(player, coverArt, size)) return;
     let cancelled = false;
     const load = () =>
-      void artUrl(coverArt, size).then((url) => {
-        if (!cancelled && url) setLoaded({ key: `${size}:${coverArt}`, url });
+      void artUrl(player, coverArt, size).then((url) => {
+        if (!cancelled && url) setLoaded({ key: `${player}|${size}:${coverArt}`, url });
       });
     const el = ref.current;
 
@@ -41,8 +44,8 @@ export function useArtUrl(
       cancelled = true;
       observer.disconnect();
     };
-  }, [ref, coverArt, size]);
+  }, [ref, player, coverArt, size]);
 
   if (!coverArt) return undefined;
-  return cachedArtUrl(coverArt, size) ?? (loaded?.key === key ? loaded.url : undefined);
+  return cachedArtUrl(player, coverArt, size) ?? (loaded?.key === key ? loaded.url : undefined);
 }
