@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { libraryPlayerOf } from '../../library/libraryPlayerOf.ts';
 import { libraryViewClass } from '../../library/libraryViewClass.ts';
-import { selectActiveDevice, useHubStore } from '../../store/useHubStore.ts';
+import { useHubStore } from '../../store/useHubStore.ts';
 import { useLibraryStore } from '../../store/useLibraryStore.ts';
 import { DetailHeader } from './DetailHeader.tsx';
 import { LibraryBody } from './LibraryBody.tsx';
@@ -12,7 +13,7 @@ import { SearchBox } from './SearchBox.tsx';
 /** Browse and play the library of the active player (or the first one), relayed by the hub. */
 export function LibraryCard() {
   const { t } = useTranslation();
-  const playerId = useHubStore((s) => (selectActiveDevice(s) ?? s.devices[0])?.id ?? '');
+  const playerId = useHubStore(libraryPlayerOf);
   const showMore = useLibraryStore((s) => s.more && s.view.kind === 'tab' && !s.loading);
   const view = useLibraryStore((s) => s.view);
   const tab = useLibraryStore((s) => s.tab);

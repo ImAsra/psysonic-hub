@@ -8,6 +8,7 @@ vi.mock('../hub/HubConnection.ts', () => ({ hub: { browse: (...a: unknown[]) => 
 const { useLibraryStore } = await import('./useLibraryStore.ts');
 const { mergePage } = await import('../library/mergePage.ts');
 const { tabRequest } = await import('../library/tabRequest.ts');
+const { libraryPlayerOf } = await import('../library/libraryPlayerOf.ts');
 const { useHubStore } = await import('./useHubStore.ts');
 
 const albums = (from: number, n: number) => Array.from({ length: n }, (_, i) => ({ id: `al${from + i}` }));
@@ -103,6 +104,21 @@ describe('the library player going away', () => {
     useLibraryStore.getState().followPlayer('desk');
     await vi.waitFor(() => expect(useLibraryStore.getState().result?.albums).toHaveLength(3));
     expect(useLibraryStore.getState().message).toBe('');
+  });
+});
+
+describe('libraryPlayerOf', () => {
+  const desk = { id: 'desk', name: 'Desk', kind: 'desktop' as const, active: false, server: [] };
+  const phone = { id: 'phone', name: 'Phone', kind: 'phone' as const, active: true, server: [] };
+
+  it('shows the playing device, else the first one', () => {
+    expect(libraryPlayerOf({ status: 'connected', devices: [desk, phone] })).toBe('phone');
+    expect(libraryPlayerOf({ status: 'connected', devices: [desk] })).toBe('desk');
+  });
+
+  it('has no player while the page is not connected, so the library reloads after reconnecting', () => {
+    expect(libraryPlayerOf({ status: 'reconnecting', devices: [desk, phone] })).toBe('');
+    expect(libraryPlayerOf({ status: 'signedOut', devices: [desk] })).toBe('');
   });
 });
 
