@@ -2,17 +2,19 @@
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
+import { body, type TestProc, type TestSocket } from './types.ts';
+
 
 const TOKEN = 'test-token-1234567890';
 const PORT = 5597;
-const srv = spawn('node', ['server.js'], { env: { ...process.env, HUB_TOKEN: TOKEN, PORT } });
+const srv = spawn('node', ['server/index.ts'], { env: { ...process.env, HUB_TOKEN: TOKEN, PORT: String(PORT) } }) as TestProc;
 await new Promise((r) => srv.stdout.once('data', r));
 
 const connect = (deviceId, kind) =>
-  new Promise((resolve, reject) => {
-    const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws`);
+  new Promise<TestSocket>((resolve, reject) => {
+    const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws`) as TestSocket;
     ws.inbox = [];
-    ws.on('message', (d) => ws.inbox.push(JSON.parse(d)));
+    ws.on('message', (d) => ws.inbox.push(JSON.parse(String(d))));
     ws.once('error', reject);
     ws.once('open', () => {
       ws.closed = new Promise((r) => ws.once('close', r));
@@ -141,7 +143,7 @@ const auth = { authorization: `Bearer ${TOKEN}` };
 // answer art requests from the player, counting how often it is asked
 let artAsked = 0;
 desk.on('message', (d) => {
-  const m = JSON.parse(d);
+  const m = JSON.parse(String(d));
   if (m.t !== 'art-request') return;
   artAsked++;
   if (m.coverArt === 'none') send(desk, { t: 'art', rid: m.rid });
@@ -162,8 +164,8 @@ assert.equal((await fetch(`http://127.0.0.1:${PORT}/api/art?id=fake`, { headers:
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/api/art?id=al-1`)).status, 401, 'needs credentials');
 
 // a player on another music server has its own artwork: the same cover id is asked for again, from it
-const other = await new Promise((resolve) => {
-  const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws`);
+const other = await new Promise<TestSocket>((resolve) => {
+  const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws`) as TestSocket;
   ws.once('open', () => {
     ws.send(JSON.stringify({ t: 'hello', v: 1, token: TOKEN, deviceId: 'desk-other', name: 'other', kind: 'desktop', server: ['bbbbbbbb'] }));
     resolve(ws);
@@ -171,7 +173,7 @@ const other = await new Promise((resolve) => {
 });
 let otherAsked = 0;
 other.on('message', (d) => {
-  const m = JSON.parse(d);
+  const m = JSON.parse(String(d));
   if (m.t !== 'art-request') return;
   otherAsked++;
   send(other, { t: 'art', rid: m.rid, mime: 'image/jpeg', data: Buffer.concat([JPEG, Buffer.from([7])]).toString('base64') });

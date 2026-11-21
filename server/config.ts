@@ -1,20 +1,43 @@
 // Environment configuration. Everything is optional except HUB_TOKEN.
 import fs from 'node:fs';
 
+type Env = Record<string, string | undefined>;
+
+export interface Config {
+  port: number;
+  bind: string;
+  token: string;
+  maxDevices: number;
+  dataDir: string;
+  user: string;
+  password: string;
+  apiToken: string;
+  apiTokenReadonly: string;
+  trustProxy: boolean;
+  allowedOrigins: string[];
+  corsOrigins: string[];
+  serverCheck: boolean;
+  yieldTimeoutMs: number;
+  maxConnections: number;
+  maxConnectionsPerIp: number;
+  publicUrl: string;
+}
+
 /** A secret from NAME, or from the file named by NAME_FILE (Docker/Kubernetes secrets). */
-function secret(env, name, errors) {
+function secret(env: Env, name: string, errors: string[]): string {
   const file = env[`${name}_FILE`];
   if (!file) return env[name] || '';
   try {
     return fs.readFileSync(file, 'utf8').trim();
   } catch (e) {
-    errors.push(`${name}_FILE could not be read: ${e.code || e.message}`);
+    const err = e as NodeJS.ErrnoException;
+    errors.push(`${name}_FILE could not be read: ${err.code || err.message}`);
     return '';
   }
 }
 
 /** Rough guess whether a secret was typed by a human instead of generated. */
-export function looksWeak(value) {
+export function looksWeak(value: string): boolean {
   if (!value) return false;
   const distinct = new Set(value).size;
   const bits = value.length * Math.log2(Math.max(2, distinct)); // an upper bound on the entropy
@@ -23,7 +46,7 @@ export function looksWeak(value) {
 }
 
 /** A whole number from the environment; anything else is a startup error (a typo must never disable a limit). */
-function whole(env, name, fallback, min, max, errors) {
+function whole(env: Env, name: string, fallback: number, min: number, max: number, errors: string[]): number {
   const raw = env[name];
   if (raw === undefined || raw === '') return fallback;
   const n = Number(raw);
@@ -34,10 +57,10 @@ function whole(env, name, fallback, min, max, errors) {
   return n;
 }
 
-export function loadConfig(env = process.env) {
-  const list = (v) => (v || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const errors = [];
-  const cfg = {
+export function loadConfig(env: Env = process.env): { cfg: Config; errors: string[]; warnings: string[] } {
+  const list = (v: string | undefined) => (v || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const errors: string[] = [];
+  const cfg: Config = {
     port: whole(env, 'PORT', 5533, 1, 65535, errors),
     bind: env.HUB_BIND || '0.0.0.0', // use 127.0.0.1 when only a local reverse proxy should reach the hub
     token: secret(env, 'HUB_TOKEN', errors), // used by the Psysonic apps
@@ -64,7 +87,7 @@ export function loadConfig(env = process.env) {
   if (cfg.apiToken && cfg.apiToken.length < 24) errors.push('API_TOKEN must be at least 24 characters.');
   if (cfg.apiTokenReadonly && cfg.apiTokenReadonly.length < 24) errors.push('API_TOKEN_READONLY must be at least 24 characters.');
   // Every secret must differ from every other one (a leaked API token must never also be a login).
-  const secrets = [['HUB_TOKEN', cfg.token], ['HUB_PASSWORD', cfg.password], ['API_TOKEN', cfg.apiToken], ['API_TOKEN_READONLY', cfg.apiTokenReadonly]]
+  const secrets = ([['HUB_TOKEN', cfg.token], ['HUB_PASSWORD', cfg.password], ['API_TOKEN', cfg.apiToken], ['API_TOKEN_READONLY', cfg.apiTokenReadonly]] as [string, string][])
     .filter(([, v]) => v);
   for (let i = 0; i < secrets.length; i++) {
     for (let j = i + 1; j < secrets.length; j++) {
@@ -75,8 +98,8 @@ export function loadConfig(env = process.env) {
   }
 
   // Not fatal, but worth saying out loud: guessable secrets are the most likely way in.
-  const warnings = [];
-  for (const [name, value] of [['HUB_TOKEN', cfg.token], ['HUB_PASSWORD', cfg.password], ['API_TOKEN', cfg.apiToken], ['API_TOKEN_READONLY', cfg.apiTokenReadonly]]) {
+  const warnings: string[] = [];
+  for (const [name, value] of ([['HUB_TOKEN', cfg.token], ['HUB_PASSWORD', cfg.password], ['API_TOKEN', cfg.apiToken], ['API_TOKEN_READONLY', cfg.apiTokenReadonly]] as [string, string][])) {
     if (looksWeak(value)) warnings.push(`${name} looks guessable. Generate one with: openssl rand -hex 24`);
   }
   if (cfg.trustProxy) {

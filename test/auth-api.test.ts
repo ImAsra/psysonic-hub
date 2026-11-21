@@ -2,6 +2,8 @@
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
+import { body, type TestProc, type TestSocket } from './types.ts';
+
 
 const TOKEN = 'device-token-1234567890';
 const USER = 'asra';
@@ -10,9 +12,9 @@ const API_FULL = 'api-full-token-abcdefghijkl';
 const API_READ = 'api-read-token-abcdefghijkl';
 
 async function startHub(port, env = {}) {
-  const srv = spawn('node', ['server.js'], {
+  const srv = spawn('node', ['server/index.ts'], {
     env: { ...process.env, PORT: String(port), HUB_TOKEN: TOKEN, HUB_DATA_DIR: '', ...env },
-  });
+  }) as TestProc;
   await new Promise((r) => srv.stdout.once('data', r));
   return srv;
 }
@@ -20,10 +22,10 @@ const wait = (ms = 150) => new Promise((r) => setTimeout(r, ms));
 const last = (ws, t) => [...ws.inbox].reverse().find((m) => m.t === t);
 
 function connect(port, deviceId, name, kind, { token = TOKEN, headers = {}, hello = true } = {}) {
-  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers });
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers }) as TestSocket;
   ws.inbox = [];
   ws.closeCode = null;
-  ws.on('message', (d) => ws.inbox.push(JSON.parse(d)));
+  ws.on('message', (d) => ws.inbox.push(JSON.parse(String(d))));
   ws.on('close', (c) => (ws.closeCode = c));
   ws.on('error', () => {});
   if (hello) ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, token, deviceId, name, kind })));
@@ -38,13 +40,13 @@ const srv = await startHub(PORT, {
 });
 const base = `http://127.0.0.1:${PORT}`;
 const get = (path, headers = {}) => fetch(base + path, { headers });
-const post = (path, body, headers = {}) =>
-  fetch(base + path, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body ?? {}) });
+const post = (path, data, headers = {}) =>
+  fetch(base + path, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(data ?? {}) });
 const bearer = (t) => ({ authorization: `Bearer ${t}` });
 
 try {
   // ---- web login ----
-  assert.equal((await (await get('/auth/config')).json()).mode, 'password');
+  assert.equal((await body((await get('/auth/config')))).mode, 'password');
   assert.equal((await get('/auth/me')).status, 401);
   assert.equal((await post('/auth/login', { user: USER, password: 'wrong-password-1' })).status, 401);
   assert.equal((await post('/auth/login', { user: 'someone', password: PASS })).status, 401);
@@ -101,7 +103,7 @@ try {
   } }));
   await wait();
 
-  const st = await (await get('/api/state', bearer(API_READ))).json();
+  const st = await body(await get('/api/state', bearer(API_READ)));
   assert.equal(st.active_device.name, 'Desktop');
   assert.equal(st.playing, true);
   assert.equal(st.track.title, 'Song');
@@ -109,12 +111,12 @@ try {
   assert.ok(st.position_sec >= 50 && st.position_sec < 53);
   assert.equal(st.track.cover_url, null);
   assert.deepEqual(st.devices.map((d) => d.name).sort(), ['Desktop', 'Laptop']);
-  assert.equal((await (await get('/api/devices', bearer(API_READ))).json()).devices.length, 2);
+  assert.equal((await body(await get('/api/devices', bearer(API_READ)))).devices.length, 2);
 
   // ---- commands (relative values are computed by the hub) ----
-  const cmd = async (path, body) => {
+  const cmd = async (path, data = undefined) => {
     desk.inbox.length = 0;
-    const res = await post(path, body, bearer(API_FULL));
+    const res = await post(path, data, bearer(API_FULL));
     await wait();
     return { res, got: last(desk, 'command') };
   };
@@ -161,7 +163,7 @@ try {
   assert.equal(last(pc, 'command').action, 'pause');
   const amb = await post('/api/command', { action: 'pause', device: 'living' }, bearer(API_FULL));
   assert.equal(amb.status, 409);
-  const ambBody = await amb.json();
+  const ambBody = await body(amb);
   assert.equal(ambBody.error, 'ambiguous_device');
   assert.deepEqual(ambBody.matches.sort(), ['Living Room PC', 'Living Room TV']);
   assert.equal((await post('/api/command', { action: 'pause', device: 'room tv' }, bearer(API_FULL))).status, 200);
@@ -208,7 +210,7 @@ try {
   assert.equal((await get('/api/cover', { cookie })).status, 200, 'the web page can load it with its session');
   const etag = cv.headers.get('etag');
   assert.equal((await get('/api/cover', { ...bearer(API_READ), 'if-none-match': etag })).status, 304);
-  const withCover = await (await get('/api/state', bearer(API_READ))).json();
+  const withCover = await body(await get('/api/state', bearer(API_READ)));
   assert.match(withCover.track.cover_url, /^http:\/\/hub\.test\/api\/cover\?track=song2&v=/);
 
   // a new track drops the old cover until its own arrives
@@ -260,14 +262,14 @@ try {
 }
 
 // ================= startup validation =================
-const bad = spawn('node', ['server.js'], { env: { ...process.env, PORT: '5594', HUB_TOKEN: TOKEN, HUB_USER: 'a', HUB_PASSWORD: 'short' } });
+const bad = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5594', HUB_TOKEN: TOKEN, HUB_USER: 'a', HUB_PASSWORD: 'short' } }) as TestProc;
 const code = await new Promise((r) => bad.on('exit', r));
 assert.equal(code, 1, 'refuses to start with a weak password');
 
 // ================= token-mode page keeps working (no HUB_PASSWORD) =================
 const srv3 = await startHub(5593);
 try {
-  assert.equal((await (await fetch('http://127.0.0.1:5593/auth/config')).json()).mode, 'token');
+  assert.equal((await body((await fetch('http://127.0.0.1:5593/auth/config')))).mode, 'token');
   assert.equal((await fetch('http://127.0.0.1:5593/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 404);
   assert.equal((await fetch('http://127.0.0.1:5593/api/state')).status, 401);
   assert.equal((await fetch('http://127.0.0.1:5593/api/state', { headers: bearer(TOKEN) })).status, 200);

@@ -4,15 +4,21 @@
   "description": "Self-hosted realtime hub for Psysonic: device switching, remote control, settings sync and a REST API",
   "private": true,
   "type": "module",
-  "main": "server.js",
+  "main": "server/index.ts",
   "scripts": {
-    "start": "node server.js",
-    "test": "node test.js && node test-library.js && node test-auth-api.js && node test-hardening.js && node test-security.js"
+    "start": "node server/index.ts",
+    "typecheck": "tsc -p . && tsc -p tsconfig.test.json",
+    "test": "node test/hub.test.ts && node test/library.test.ts && node test/auth-api.test.ts && node test/hardening.test.ts && node test/security.test.ts"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "ws": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.18.2",
+    "typescript": "^6.0.3"
   }
 }

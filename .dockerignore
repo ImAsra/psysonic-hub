@@ -6,8 +6,8 @@ node_modules
 data
 docs
 tools
-test.js
-test-auth-api.js
+test
+tsconfig*.json
 *.md
 compose.yaml
 docker-compose.yml

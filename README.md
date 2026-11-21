@@ -146,11 +146,12 @@ Planned or under consideration, roughly in this order:
 
 ```sh
 npm ci --ignore-scripts
-HUB_TOKEN=a-long-test-token-123 HUB_USER=me HUB_PASSWORD=a-long-password node server.js
+HUB_TOKEN=a-long-test-token-123 HUB_USER=me HUB_PASSWORD=a-long-password npm start
+npm run typecheck
 npm test
 ```
 
-`tools/remote.js` is a tiny command-line remote and `tools/fakeplayer.js` a fake second player, handy for trying things without another device.
+The server is TypeScript run directly by Node (no build step); `shared/protocol.ts` holds the message types. `tools/remote.ts` is a tiny command-line remote and `tools/fakeplayer.ts` a fake second player, handy for trying things without another device.
 
 ## License
 

@@ -3,9 +3,11 @@
 // Commands: toggle | play | pause | next | prev | seek 1:30 | seek 90 | seek +10 | seek -10 | vol 0.5 | devices
 import readline from 'node:readline';
 import WebSocket from 'ws';
+import type { TestSocket } from '../test/types.ts';
+
 
 const url = process.argv[2] || 'ws://127.0.0.1:5533/ws';
-const ws = new WebSocket(url);
+const ws = new WebSocket(url) as TestSocket;
 const me = 'cli-remote';
 let devices = [];
 let last = null; // last state seen, for relative seeks
@@ -17,7 +19,7 @@ const send = (o) => ws.send(JSON.stringify(o));
 ws.on('open', () => send({ t: 'hello', v: 1, token: process.env.HUB_TOKEN, deviceId: me, name: 'CLI remote', kind: 'web' }));
 ws.on('close', (c, r) => { console.log('closed', c, String(r)); process.exit(0); });
 ws.on('message', (d) => {
-  const m = JSON.parse(d);
+  const m = JSON.parse(String(d));
   if (m.t === 'welcome' || m.t === 'devices') {
     devices = m.devices;
     console.log('devices:', devices.map((x) => `${x.name}${x.active ? ' ▶' : ''}`).join(' | '));

@@ -24,6 +24,7 @@ jobs:
           node-version: 26
       - run: npm ci --ignore-scripts
       - run: npm audit --omit=dev --audit-level=high
+      - run: npm run typecheck
       - run: npm test
 
   image:

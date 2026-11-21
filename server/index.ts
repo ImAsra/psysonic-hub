@@ -3,13 +3,13 @@
 // never talks to your music server. See README.md and docs/.
 import http from 'node:http';
 import fs from 'node:fs';
-import { WebSocketServer } from 'ws';
-import { loadConfig } from './lib/config.js';
-import { createAuth } from './lib/auth.js';
-import { createHub, PROTOCOL } from './lib/core.js';
-import { createApi } from './lib/api.js';
-import { createLibrary } from './lib/library.js';
-import { BRAND_CSP, baseHeaders, readJson, sendJson, setSecureCheck } from './lib/http.js';
+import { type WebSocket, WebSocketServer } from 'ws';
+import { loadConfig } from './config.ts';
+import { createAuth } from './auth.ts';
+import { createHub, PROTOCOL } from './core.ts';
+import { createApi } from './api.ts';
+import { createLibrary } from './library.ts';
+import { BRAND_CSP, baseHeaders, readJson, sendJson, setSecureCheck } from './http.ts';
 
 const { cfg, errors, warnings } = loadConfig();
 if (errors.length) {
@@ -32,13 +32,16 @@ const HELLO_TIMEOUT_MS = 5000;
 const PING_MS = 30000;
 
 // ---- static files: fixed routes only (no filesystem path ever comes from a request) ----
-const readPublic = (f) => fs.readFileSync(new URL(`./public/${f}`, import.meta.url));
+/** A connection, plus what the server tracks about it. */
+type Conn = WebSocket & { isAlive?: boolean; sessionId?: string };
+
+const readPublic = (f: string) => fs.readFileSync(new URL(`../public/${f}`, import.meta.url));
 const PAGE = readPublic('index.html');
 const APP_JS = readPublic('app.js');
 const APP_CSS = readPublic('app.css');
 const LIBRARY_JS = readPublic('library.js');
 const SW_JS = readPublic('sw.js');
-const getLocale = (route) => {
+const getLocale = (route: string) => {
   const match = route.match(/^\/locales\/([a-z]{2}(?:-[A-Z]{2})?)\.json$/);
   if (!match) return null;
 
@@ -58,7 +61,7 @@ const MANIFEST = JSON.stringify({
   ],
 });
 // optional files you add to ./public
-const BRAND = { '/logo.svg': 'image/svg+xml', '/icon.png': 'image/png', '/icon-maskable.png': 'image/png' };
+const BRAND: Record<string, string> = { '/logo.svg': 'image/svg+xml', '/icon.png': 'image/png', '/icon-maskable.png': 'image/png' };
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://hub');
@@ -101,7 +104,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
     if (req.method === 'GET' && BRAND[route]) {
-      return fs.readFile(new URL(`./public${route}`, import.meta.url), (err, data) => {
+      return fs.readFile(new URL(`../public${route}`, import.meta.url), (err, data) => {
         if (err) return res.writeHead(404, baseHeaders(req)).end();
         // Sandboxed: even a hostile SVG dropped into ./public could not run script from this origin.
         res.writeHead(200, { ...baseHeaders(req), 'content-security-policy': BRAND_CSP, 'content-type': BRAND[route], 'cache-control': 'public, max-age=3600' });
@@ -140,7 +143,7 @@ const server = http.createServer(async (req, res) => {
     if (route === '/auth/logout' && req.method === 'POST') {
       const sid = auth.logout(req);
       // Signing out also ends the page's open WebSocket(s); a socket must not outlive its session.
-      if (sid) for (const c of wss.clients) if (c.sessionId === sid) c.close(4005, 'signed out');
+      if (sid) for (const c of wss.clients as Set<Conn>) if (c.sessionId === sid) c.close(4005, 'signed out');
       return sendJson(res, 200, { ok: true }, { 'set-cookie': auth.clearCookie(req) });
     }
 
@@ -179,9 +182,10 @@ wss.on('connection', (ws, req) => {
   });
 
   // A connection that floods us gets cut off (a cover image costs as much as ten ordinary messages).
+  const conn = ws as Conn;
   let budget = MSG_BURST;
   let refilled = Date.now();
-  const spend = (cost) => {
+  const spend = (cost: number) => {
     const now = Date.now();
     budget = Math.min(MSG_BURST, budget + (now - refilled) * MSG_PER_MS);
     refilled = now;
@@ -193,17 +197,17 @@ wss.on('connection', (ws, req) => {
   // A browser session counts only for this site's own pages (cross-site WebSocket hijacking guard).
   const sessionId = auth.mode === 'password' ? auth.sessionFromReq(req) : null;
   const sessionOk = !!sessionId && auth.originOk(req);
-  let id = null;
+  let id: string | null = null;
   let remoteOnly = false; // web remotes can control devices but are not players
-  ws.isAlive = true;
-  ws.on('pong', () => (ws.isAlive = true));
+  conn.isAlive = true;
+  ws.on('pong', () => (conn.isAlive = true));
 
   const helloTimer = setTimeout(() => ws.close(4001, 'hello timeout'), HELLO_TIMEOUT_MS);
 
   ws.on('message', (raw) => {
     if (!spend(1)) return ws.close(4012, 'rate limited');
-    let m;
-    try { m = JSON.parse(raw); } catch { return ws.close(4002, 'bad json'); }
+    let m: Record<string, unknown>;
+    try { m = JSON.parse(raw.toString()); } catch { return ws.close(4002, 'bad json'); }
     if (!m || typeof m.t !== 'string') return;
     if (m.t === 'cover' && !spend(9)) return ws.close(4012, 'rate limited');
     if ((m.t === 'queue' || m.t === 'art' || m.t === 'browse-result') && !spend(2)) return ws.close(4012, 'rate limited');
@@ -224,7 +228,7 @@ wss.on('connection', (ws, req) => {
       clearTimeout(helloTimer);
       id = m.deviceId;
       remoteOnly = kind === 'web';
-      if (!byToken) ws.sessionId = sessionId; // tied to the login session: ends when it ends
+      if (!byToken && sessionId) conn.sessionId = sessionId; // tied to the login session: ends when it ends
       return;
     }
 
@@ -234,9 +238,9 @@ wss.on('connection', (ws, req) => {
           if (remoteOnly || !m.state || typeof m.state !== 'object') return;
           return hub.reportState(id, m.state);
         case 'command':
-          return void hub.command(m.to, m.action, m.args, id);
+          return void hub.command(m.to as string, m.action, m.args, id);
         case 'transfer': {
-          const out = hub.transfer(m.to, id, m.fresh === true);
+          const out = hub.transfer(m.to as string, id, m.fresh === true);
           if (out.error) hub.send(ws, { t: 'transfer-failed', to: m.to, reason: out.error });
           return;
         }
@@ -284,7 +288,7 @@ wss.on('connection', (ws, req) => {
 
 // Drop dead connections (phones losing signal etc.)
 setInterval(() => {
-  for (const ws of wss.clients) {
+  for (const ws of wss.clients as Set<Conn>) {
     if (ws.sessionId && !auth.sessionActive(ws.sessionId)) { ws.close(4005, 'session ended'); continue; }
     if (!ws.isAlive) { ws.terminate(); continue; }
     ws.isAlive = false;
@@ -293,7 +297,7 @@ setInterval(() => {
 }, PING_MS).unref();
 
 // Stop cleanly on `docker stop` / Ctrl+C.
-function shutdown(signal) {
+function shutdown(signal: string) {
   console.log(`${signal}: shutting down`);
   for (const c of wss.clients) c.close(1001, 'server stopping');
   server.close(() => process.exit(0));

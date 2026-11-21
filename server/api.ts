@@ -1,32 +1,45 @@
 // REST API for automations (Home Assistant, Stream Deck, shell scripts...) and a live event stream.
 // It only translates requests into the same commands the apps use; it never touches your music server.
-import { readJson } from './http.js';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { createAuth } from './auth.ts';
+import type { Config } from './config.ts';
+import type { ApiResult, createHub } from './core.ts';
+import { type Headers, readJson } from './http.ts';
+import type { createLibrary } from './library.ts';
+
+interface ApiDeps {
+  hub: ReturnType<typeof createHub>;
+  library: ReturnType<typeof createLibrary>;
+  auth: ReturnType<typeof createAuth>;
+  cfg: Config;
+  baseHeaders: (req?: IncomingMessage) => Headers;
+}
 
 const MAX_SSE = 20;
 const RATE_PER_MIN = 600;
 
-export function createApi({ hub, library, auth, cfg, baseHeaders }) {
-  const sse = new Set();
-  const rate = new Map(); // ip -> { n, reset }
+export function createApi({ hub, library, auth, cfg, baseHeaders }: ApiDeps) {
+  const sse = new Set<ServerResponse>();
+  const rate = new Map<string, { n: number; reset: number }>(); // by client address
   setInterval(() => { const now = Date.now(); for (const [ip, r] of rate) if (r.reset < now) rate.delete(ip); }, 60_000).unref();
 
-  const cors = (req) => {
+  const cors = (req: IncomingMessage): Headers => {
     const origin = req.headers.origin;
     return origin && cfg.corsOrigins.includes(origin)
       ? { 'access-control-allow-origin': origin, vary: 'Origin' }
       : {};
   };
 
-  const json = (req, res, status, body, extra = {}) => {
+  const json = (req: IncomingMessage, res: ServerResponse, status: number, body: unknown, extra: Headers = {}) => {
     res.writeHead(status, {
       ...baseHeaders(req), ...cors(req), 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extra,
     });
     res.end(JSON.stringify(body));
   };
-  const fail = (req, res, status, error, extra) => json(req, res, status, { error }, extra);
+  const fail = (req: IncomingMessage, res: ServerResponse, status: number, error: string, extra?: Headers) => json(req, res, status, { error }, extra);
 
   // ---- live event stream (SSE) ----
-  let sseTimer = null;
+  let sseTimer: NodeJS.Timeout | null = null;
   const pushSnapshot = () => {
     sseTimer = null;
     if (!sse.size) return;
@@ -36,7 +49,7 @@ export function createApi({ hub, library, auth, cfg, baseHeaders }) {
   hub.events.on('change', () => { if (!sseTimer && sse.size) sseTimer = setTimeout(pushSnapshot, 150); }); // coalesce bursts
   setInterval(() => { for (const res of sse) res.write(': ping\n\n'); }, 20_000).unref();
 
-  function openStream(req, res) {
+  function openStream(req: IncomingMessage, res: ServerResponse) {
     if (sse.size >= MAX_SSE) return fail(req, res, 503, 'too_many_streams');
     res.writeHead(200, {
       ...baseHeaders(req), ...cors(req), 'content-type': 'text/event-stream', 'cache-control': 'no-store',
@@ -51,7 +64,7 @@ export function createApi({ hub, library, auth, cfg, baseHeaders }) {
   const SIMPLE = new Set(['play', 'pause', 'toggle', 'next', 'prev']);
 
   /** Returns true if the request was handled. */
-  async function handle(req, res, url) {
+  async function handle(req: IncomingMessage, res: ServerResponse, url: URL): Promise<boolean> {
     if (!url.pathname.startsWith('/api/')) return false;
 
     if (req.method === 'OPTIONS') {
@@ -70,7 +83,7 @@ export function createApi({ hub, library, auth, cfg, baseHeaders }) {
     const now = Date.now();
     const r = rate.get(ip);
     if (!r || r.reset < now) {
-      if (rate.size >= 10_000) rate.delete(rate.keys().next().value); // bounded memory
+      if (rate.size >= 10_000) rate.delete(rate.keys().next().value!); // bounded memory
       rate.set(ip, { n: 1, reset: now + 60_000 });
     }
     else if (++r.n > RATE_PER_MIN) {
@@ -113,7 +126,7 @@ export function createApi({ hub, library, auth, cfg, baseHeaders }) {
         return true;
       }
       if (route === 'art') {
-        // Library artwork, fetched through a connected player and cached (see lib/library.js).
+        // Library artwork, fetched through a connected player and cached (see server/library.ts).
         const art = await library.getArt(url.searchParams.get('id') || '', url.searchParams.get('size'));
         if (!art) { fail(req, res, 404, 'no_art'); return true; }
         if (req.headers['if-none-match'] === `"${art.etag}"`) {
@@ -138,12 +151,12 @@ export function createApi({ hub, library, auth, cfg, baseHeaders }) {
 
     let body;
     try { body = await readJson(req); } catch (e) {
-      const big = e.message === 'too_large';
+      const big = (e as Error).message === 'too_large';
       fail(req, res, big ? 413 : 400, big ? 'too_large' : 'bad_json', big ? { connection: 'close' } : {});
       return true;
     }
     const device = typeof body.device === 'string' ? body.device : undefined;
-    const reply = (out) => { const { status, ...rest } = out; json(req, res, status, rest); return true; };
+    const reply = (out: ApiResult) => { const { status, ...rest } = out; json(req, res, status, rest); return true; };
 
     if (route === 'command') return reply(hub.apiCommand(String(body.action), body.args, device));
     if (route === 'transfer') return reply(hub.apiTransfer(device));

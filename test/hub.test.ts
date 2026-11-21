@@ -2,10 +2,12 @@
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
+import { body, type TestProc, type TestSocket } from './types.ts';
+
 
 const TOKEN = 'test-token-1234567890';
 const PORT = 5599;
-const srv = spawn('node', ['server.js'], { env: { ...process.env, HUB_TOKEN: TOKEN, PORT } });
+const srv = spawn('node', ['server/index.ts'], { env: { ...process.env, HUB_TOKEN: TOKEN, PORT: String(PORT) } }) as TestProc;
 await new Promise((r) => srv.stdout.once('data', r));
 
 const page = await fetch(`http://127.0.0.1:${PORT}/`);
@@ -14,7 +16,7 @@ assert.match(await page.text(), /Psysonic Hub/);
 const locale = await fetch(`http://127.0.0.1:${PORT}/locales/en.json`);
 assert.equal(locale.status, 200);
 assert.equal(locale.headers.get('content-type').split(';')[0], 'application/json');
-assert.equal((await locale.json())['language.en'], 'English');
+assert.equal((await body(locale))['language.en'], 'English');
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/etc/passwd`)).status, 404);
 // branding files are optional: served when present, plain 404 otherwise (never an error)
 assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/logo.svg`)).status));
@@ -22,7 +24,7 @@ assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/icon.png`))
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/logo.svg/../server.js`)).status, 404);
 
 // installable web app: manifest with a maskable icon, a root-scoped service worker that never caches sign-in or the API
-const manifest = await (await fetch(`http://127.0.0.1:${PORT}/manifest.webmanifest`)).json();
+const manifest = await body(await fetch(`http://127.0.0.1:${PORT}/manifest.webmanifest`));
 assert.equal(manifest.display, 'standalone');
 assert.equal(manifest.scope, '/');
 assert.ok(manifest.icons.some((i) => i.purpose === 'maskable'));
@@ -36,11 +38,11 @@ assert.doesNotMatch(swText, /['"]\/(auth|api|ws)/);
 const url = `ws://127.0.0.1:${PORT}/ws`;
 
 const connect = (deviceId, name, kind, token = TOKEN) =>
-  new Promise((resolve, reject) => {
-    const ws = new WebSocket(url);
+  new Promise<TestSocket>((resolve, reject) => {
+    const ws = new WebSocket(url) as TestSocket;
     ws.inbox = [];
 
-    ws.on('message', (d) => ws.inbox.push(JSON.parse(d)));
+    ws.on('message', (d) => ws.inbox.push(JSON.parse(String(d))));
     ws.once('error', reject);
 
     ws.once('open', () => {

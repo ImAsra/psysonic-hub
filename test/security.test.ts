@@ -6,6 +6,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import WebSocket from 'ws';
+import { body, type TestProc, type TestSocket } from './types.ts';
+
 
 const RAND = (n) => [...Array(n)].map(() => 'abcdef0123456789'[Math.floor(Math.random() * 16)]).join('');
 const TOKEN = RAND(48);
@@ -17,9 +19,9 @@ const last = (ws, t) => [...ws.inbox].reverse().find((m) => m.t === t);
 const JSON_H = { 'content-type': 'application/json' };
 
 async function startHub(port, env = {}) {
-  const srv = spawn('node', ['server.js'], {
+  const srv = spawn('node', ['server/index.ts'], {
     env: { ...process.env, PORT: String(port), HUB_TOKEN: TOKEN, HUB_DATA_DIR: '', ...env },
-  });
+  }) as TestProc;
   srv.exited = null;
   srv.err = '';
   srv.stderr.on('data', (d) => (srv.err += d));
@@ -28,10 +30,10 @@ async function startHub(port, env = {}) {
   return srv;
 }
 function dev(port, id, name, { token = TOKEN, kind = 'desktop', headers = {} } = {}) {
-  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers });
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers }) as TestSocket;
   ws.inbox = [];
   ws.closeCode = null;
-  ws.on('message', (d) => ws.inbox.push(JSON.parse(d)));
+  ws.on('message', (d) => ws.inbox.push(JSON.parse(String(d))));
   ws.on('close', (c) => (ws.closeCode = c));
   ws.on('error', () => {});
   ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, token, deviceId: id, name, kind })));
@@ -58,7 +60,7 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   const w = last(C, 'welcome');
   assert.deepEqual(Object.keys(w.syncConfig).sort(), ['appearance', 'eq', 'keybindings', 'loudness', 'lyrics', 'playback']);
   assert.equal(JSON.stringify(w.settings).includes('polluted'), false, 'no setting leaked in through a magic category name');
-  assert.deepEqual({}.polluted, undefined);
+  assert.deepEqual(({} as Record<string, unknown>).polluted, undefined);
 
   // state: only known fields, clamped, truncated
   B.inbox.length = 0;
@@ -113,7 +115,7 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
 {
   const P = 5563;
   const srv = await startHub(P, { API_TOKEN: FULL, API_TOKEN_READONLY: READ });
-  const call = (t) => fetch(`http://127.0.0.1:${P}/api/state`, { headers: t ? { authorization: `Bearer ${t}` } : {} });
+  const call = (t = undefined) => fetch(`http://127.0.0.1:${P}/api/state`, { headers: t ? { authorization: `Bearer ${t}` } : {} });
   for (let i = 0; i < 5; i++) assert.equal((await call()).status, 401); // no credentials at all: not counted
   assert.equal((await call(READ)).status, 200);
   for (let i = 0; i < 10; i++) assert.equal((await call(RAND(48))).status, 401);
@@ -258,12 +260,12 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   const js = await fetch(`${base}/app.js`);
   assert.match(js.headers.get('content-type'), /javascript/);
   assert.equal((await fetch(`${base}/app.css`)).status, 200);
-  for (const evil of ['/public/app.js', '/..%2Fserver.js', '/lib/core.js', '/.env', '/package.json', '/app.js/../server.js']) {
+  for (const evil of ['/public/app.js', '/..%2Fserver.js', '/server/core.ts', '/lib/core.js', '/.env', '/package.json', '/app.js/../server.js']) {
     assert.equal((await fetch(`${base}${evil}`)).status, 404, evil);
   }
 
   // a logo you drop into ./public is served sandboxed (never allowed to run script)
-  const logo = new URL('./public/logo.svg', import.meta.url);
+  const logo = new URL('../public/logo.svg', import.meta.url);
   const had = fs.existsSync(logo);
   if (!had) fs.writeFileSync(logo, '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
   try {
@@ -280,7 +282,7 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
 // ======================= numbers are validated, every secret must differ =======================
 {
   const run = async (env) => {
-    const p = spawn('node', ['server.js'], { env: { ...process.env, PORT: '5546', HUB_TOKEN: TOKEN, ...env } });
+    const p = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5546', HUB_TOKEN: TOKEN, ...env } }) as TestProc;
     let err = '';
     p.stderr.on('data', (d) => (err += d));
     const code = await new Promise((r) => p.on('exit', r));
@@ -304,7 +306,7 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
 
 // ======================= the page copes with the hub's limits =======================
 {
-  const js = fs.readFileSync(new URL('./public/app.js', import.meta.url), 'utf8');
+  const js = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(js, /4011/, 'the page stops retrying when its address is locked out');
   assert.match(js, /4010/);
   assert.match(js, /100 - \(Date\.now\(\) - volSentAt\)/, 'volume commands from the slider are throttled');
@@ -328,13 +330,13 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   await wait(600);
   assert.equal(srv.exited, 0, 'SIGTERM stops the hub cleanly');
 
-  const missing = spawn('node', ['server.js'], { env: { ...process.env, PORT: '5569', HUB_TOKEN: '', HUB_TOKEN_FILE: path.join(dir, 'nope') } });
+  const missing = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5569', HUB_TOKEN: '', HUB_TOKEN_FILE: path.join(dir, 'nope') } }) as TestProc;
   let merr = '';
   missing.stderr.on('data', (d) => (merr += d));
   assert.equal(await new Promise((r) => missing.on('exit', r)), 1);
   assert.match(merr, /HUB_TOKEN_FILE could not be read/);
 
-  const same = spawn('node', ['server.js'], { env: { ...process.env, PORT: '5569', HUB_TOKEN: TOKEN, API_TOKEN: TOKEN } });
+  const same = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5569', HUB_TOKEN: TOKEN, API_TOKEN: TOKEN } }) as TestProc;
   let serr = '';
   same.stderr.on('data', (d) => (serr += d));
   assert.equal(await new Promise((r) => same.on('exit', r)), 1);

@@ -1,4 +1,7 @@
 // Small HTTP helpers shared by the server and the API.
+import type { IncomingMessage, ServerResponse } from 'node:http';
+
+export type Headers = Record<string, string | number>;
 // No inline script or style anywhere (the page loads /app.js and /app.css), so an injected
 // <script> or event handler would not run even if some text were ever rendered unescaped.
 export const CSP = [
@@ -16,11 +19,11 @@ export const CSP = [
 /** For files you drop into ./public (logo.svg ...): an SVG must never be able to run script. */
 export const BRAND_CSP = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
 
-let secureCheck = () => false;
+let secureCheck: (req: IncomingMessage) => boolean = () => false;
 /** Registers how to tell whether a request arrived over HTTPS (also behind a trusted proxy). */
-export const setSecureCheck = (fn) => { secureCheck = fn; };
+export const setSecureCheck = (fn: (req: IncomingMessage) => boolean) => { secureCheck = fn; };
 
-export const baseHeaders = (req) => ({
+export const baseHeaders = (req?: IncomingMessage): Headers => ({
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'x-frame-options': 'DENY',
@@ -30,11 +33,11 @@ export const baseHeaders = (req) => ({
 });
 
 /** Read a small JSON body. Rejects with Error('too_large') or Error('bad_json'). */
-export const readJson = (req, limit = 8 * 1024) => new Promise((resolve, reject) => {
+export const readJson = (req: IncomingMessage, limit = 8 * 1024) => new Promise<Record<string, unknown>>((resolve, reject) => {
   let size = 0;
   let tooLarge = false;
-  const chunks = [];
-  req.on('data', (c) => {
+  const chunks: Buffer[] = [];
+  req.on('data', (c: Buffer) => {
     if (tooLarge) return; // discard the rest; the reply closes the connection
     size += c.length;
     if (size > limit) { tooLarge = true; chunks.length = 0; reject(new Error('too_large')); return; }
@@ -52,7 +55,7 @@ export const readJson = (req, limit = 8 * 1024) => new Promise((resolve, reject)
   req.on('error', reject);
 });
 
-export const sendJson = (res, status, body, extra = {}) => {
+export const sendJson = (res: ServerResponse, status: number, body: unknown, extra: Headers = {}) => {
   res.writeHead(status, {
     ...baseHeaders(res.req), 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extra,
   });

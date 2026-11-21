@@ -11,6 +11,8 @@ import WebSocket from 'ws';
 
 // A tiny solid-colour PNG, uploaded as the "cover" whenever this fake player starts playing.
 import zlib from 'node:zlib';
+import type { TestSocket } from '../test/types.ts';
+
 const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
 const crc32 = (b) => { let c = 0xffffffff; for (const x of b) c = crcTable[(c ^ x) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
 const chunk = (type, data) => { const t = Buffer.from(type); const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([t, data]))); return Buffer.concat([len, t, data, crc]); };
@@ -24,13 +26,14 @@ const makeCover = () => {
 
 const url = process.argv[2] || 'ws://127.0.0.1:5533/ws';
 const ME = 'fake-phone-0001';
-const ws = new WebSocket(url);
+const ws = new WebSocket(url) as TestSocket;
 let devices = [];
-let track = { trackId: 'fake', title: '(fake track)', artist: 'Fake phone', durationSec: 240, volume: 0.5 };
+import type { PlayerState } from '../shared/protocol.ts';
+let track: PlayerState = { trackId: 'fake', title: '(fake track)', artist: 'Fake phone', durationSec: 240, volume: 0.5 };
 let playing = false;
 const LIST = ['Fake track 1', 'Fake track 2', 'Fake track 3', 'Fake track 4', 'Fake track 5'];
 let idx = 0;
-const setTrack = (i, title) => {
+const setTrack = (i, title = undefined) => {
   idx = (i + LIST.length) % LIST.length;
   track = { ...track, trackId: 'fake-' + Date.now(), title: title ?? LIST[idx], artist: 'Fake phone', durationSec: 240 };
   pos = 0; posAt = Date.now();
@@ -54,7 +57,7 @@ const log = (...a) => console.log(new Date().toLocaleTimeString(), ...a);
 ws.on('open', () => send({ t: 'hello', v: 1, token: process.env.HUB_TOKEN, deviceId: ME, name: 'Fake phone', kind: 'phone' }));
 ws.on('close', (c, r) => { log('closed', c, String(r)); process.exit(0); });
 ws.on('message', (d) => {
-  const m = JSON.parse(d);
+  const m = JSON.parse(String(d));
   switch (m.t) {
     case 'welcome':
     case 'devices':

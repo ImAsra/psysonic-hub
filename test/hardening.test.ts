@@ -3,6 +3,8 @@
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
+import { body, type TestProc, type TestSocket } from './types.ts';
+
 
 const TOKEN = 'device-token-1234567890';
 const FULL = 'api-full-token-abcdefghijkl';
@@ -12,19 +14,19 @@ const has = (ws, t) => ws.inbox.some((m) => m.t === t);
 const clear = (...wss) => wss.forEach((w) => (w.inbox.length = 0));
 
 async function startHub(port, env = {}) {
-  const srv = spawn('node', ['server.js'], {
+  const srv = spawn('node', ['server/index.ts'], {
     env: { ...process.env, PORT: String(port), HUB_TOKEN: TOKEN, HUB_DATA_DIR: '', ...env },
-  });
-  srv.exited = false;
-  srv.on('exit', () => (srv.exited = true));
+  }) as TestProc;
+  srv.exited = null;
+  srv.on('exit', (c) => (srv.exited = c ?? -1));
   await new Promise((r) => srv.stdout.once('data', r));
   return srv;
 }
-function dev(port, id, name, { kind = 'desktop', server, token = TOKEN, headers = {} } = {}) {
-  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers });
+function dev(port, id, name, { kind = 'desktop', server = undefined, token = TOKEN, headers = {} } = {}) {
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers }) as TestSocket;
   ws.inbox = [];
   ws.closeCode = null;
-  ws.on('message', (d) => ws.inbox.push(JSON.parse(d)));
+  ws.on('message', (d) => ws.inbox.push(JSON.parse(String(d))));
   ws.on('close', (c) => (ws.closeCode = c));
   ws.on('error', () => {});
   ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, token, deviceId: id, name, kind, server })));
@@ -105,7 +107,7 @@ const playing = (extra = {}) => ({ t: 'state', state: { trackId: 't1', title: 'T
   await wait();
   const r = await fetch(`http://127.0.0.1:${P}/api/transfer`, { method: 'POST', headers: { authorization: `Bearer ${FULL}` }, body: JSON.stringify({ device: 'Yankee' }) });
   assert.equal(r.status, 409);
-  assert.equal((await r.json()).error, 'server_mismatch');
+  assert.equal((await body(r)).error, 'server_mismatch');
   X.close(); Y.close(); srv.kill();
 }
 
@@ -225,7 +227,7 @@ const playing = (extra = {}) => ({ t: 'state', state: { trackId: 't1', title: 'T
   for (const m of junk) send(A, m);
   A.send('null'); A.send('[]'); A.send('"x"'); A.send('12');
   await wait(400);
-  assert.ok(!srv.exited, 'the hub survived every malformed message');
+  assert.equal(srv.exited, null, 'the hub survived every malformed message');
   const h = await fetch(`http://127.0.0.1:${P}/health`);
   assert.equal(h.status, 200);
   const cover = await fetch(`http://127.0.0.1:${P}/api/cover`, { headers: { authorization: `Bearer ${TOKEN}` } });
@@ -294,7 +296,7 @@ const playing = (extra = {}) => ({ t: 'state', state: { trackId: 't1', title: 'T
   assert.equal(r.b.args.value, 'one', 'Beta had repeat on "all"');
   r = await call('volume', { delta: 0.1, device: 'Nostate' });
   assert.equal(r.res.status, 409);
-  assert.equal((await r.res.json()).error, 'device_state_unknown');
+  assert.equal((await body(r.res)).error, 'device_state_unknown');
   assert.ok(!r.n);
   r = await call('volume', { volume: 0.4, device: 'Nostate' }); // absolute values need no known state
   assert.equal(r.res.status, 200);
