@@ -34,6 +34,7 @@ const readPublic = (f) => fs.readFileSync(new URL(`./public/${f}`, import.meta.u
 const PAGE = readPublic('index.html');
 const APP_JS = readPublic('app.js');
 const APP_CSS = readPublic('app.css');
+const SW_JS = readPublic('sw.js');
 const getLocale = (route) => {
   const match = route.match(/^\/locales\/([a-z]{2}(?:-[A-Z]{2})?)\.json$/);
   if (!match) return null;
@@ -45,11 +46,16 @@ const getLocale = (route) => {
   }
 };
 const MANIFEST = JSON.stringify({
-  name: 'Psysonic Remote', short_name: 'Remote', start_url: '/', display: 'standalone',
+  id: '/', name: 'Psysonic Remote', short_name: 'Psysonic', description: 'Control Psysonic on your devices',
+  start_url: '/', scope: '/', display: 'standalone', orientation: 'portrait',
   background_color: '#1e1e2e', theme_color: '#181825',
-  icons: [{ src: '/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any' }],
+  icons: [
+    { src: '/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ],
 });
-const BRAND = { '/logo.svg': 'image/svg+xml', '/icon.png': 'image/png' }; // optional files you add to ./public
+// optional files you add to ./public
+const BRAND = { '/logo.svg': 'image/svg+xml', '/icon.png': 'image/png', '/icon-maskable.png': 'image/png' };
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://hub');
@@ -69,6 +75,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && route === '/app.css') {
       res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' });
       return res.end(APP_CSS);
+    }
+    if (req.method === 'GET' && route === '/sw.js') {
+      // no-cache: the browser checks for a newer service worker on every load
+      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
+      return res.end(SW_JS);
     }
     if (req.method === 'GET') {
        const locale = getLocale(route);

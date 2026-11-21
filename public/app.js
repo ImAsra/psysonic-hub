@@ -622,3 +622,6 @@ async function start() {
 }
 
 start();
+
+// Installed web app: keeps the page available while the hub is unreachable (needs https or localhost).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
