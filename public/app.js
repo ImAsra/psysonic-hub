@@ -14,6 +14,33 @@ const store = {
 };
 
 const fallbackTranslations = {
+  'queue.title': 'Up next',
+  'queue.more': '{{count}} more in the queue',
+  'library.title': 'Library',
+  'library.search': 'Search songs, albums, artists',
+  'library.albums': 'Albums',
+  'library.artists': 'Artists',
+  'library.playlists': 'Playlists',
+  'library.songs': 'Songs',
+  'library.sort.newest': 'Newest',
+  'library.sort.recent': 'Recently played',
+  'library.sort.frequent': 'Most played',
+  'library.sort.random': 'Random',
+  'library.sort.name': 'A–Z',
+  'library.sort.starred': 'Favourites',
+  'library.back': '‹ Back',
+  'library.play': 'Play',
+  'library.playNext': 'Play next',
+  'library.addToQueue': 'Add to queue',
+  'library.more': 'Load more',
+  'library.loading': 'Loading…',
+  'library.empty': 'Nothing here yet.',
+  'library.noResults': 'No results.',
+  'library.noPlayer': 'Open Psysonic on a device to browse your library.',
+  'library.timeout': 'The player did not answer. Try again.',
+  'library.failed': 'Could not load this from the music server.',
+  'library.albumCount': '{{count}} albums',
+  'library.songCount': '{{count}} songs',
   'app.remote': 'Remote',
   'status.notConnected': 'Not connected',
   'status.connecting': 'Connecting…',
@@ -187,6 +214,7 @@ function showLogin(msg) {
   $('main').classList.add('hidden');
   $('devicesCard').classList.add('hidden');
   $('syncCard').classList.add('hidden');
+  hideLibraryCards();
   $('login').classList.remove('hidden');
   $('logout').classList.add('hidden');
   $('loginMsg').textContent = msg || '';
@@ -285,6 +313,8 @@ function connect() {
         loadCover(coverTrack);
       }
     }
+
+    onLibraryMessage(m); // queue and library (library.js)
   };
 
   ws.onclose = (e) => {
@@ -611,6 +641,7 @@ async function start() {
       applyTranslations();
 
       if (ws?.readyState === 1) {
+        drawQueue();
         drawDevices();
         drawSync();
         draw();

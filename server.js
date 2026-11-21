@@ -8,6 +8,7 @@ import { loadConfig } from './lib/config.js';
 import { createAuth } from './lib/auth.js';
 import { createHub, PROTOCOL } from './lib/core.js';
 import { createApi } from './lib/api.js';
+import { createLibrary } from './lib/library.js';
 import { BRAND_CSP, baseHeaders, readJson, sendJson, setSecureCheck } from './lib/http.js';
 
 const { cfg, errors, warnings } = loadConfig();
@@ -24,7 +25,8 @@ const hub = createHub({
 });
 
 process.on('unhandledRejection', (e) => console.error('unhandled rejection:', e));
-const api = createApi({ hub, auth, cfg, baseHeaders });
+const library = createLibrary({ hub });
+const api = createApi({ hub, library, auth, cfg, baseHeaders });
 
 const HELLO_TIMEOUT_MS = 5000;
 const PING_MS = 30000;
@@ -34,6 +36,7 @@ const readPublic = (f) => fs.readFileSync(new URL(`./public/${f}`, import.meta.u
 const PAGE = readPublic('index.html');
 const APP_JS = readPublic('app.js');
 const APP_CSS = readPublic('app.css');
+const LIBRARY_JS = readPublic('library.js');
 const SW_JS = readPublic('sw.js');
 const getLocale = (route) => {
   const match = route.match(/^\/locales\/([a-z]{2}(?:-[A-Z]{2})?)\.json$/);
@@ -71,6 +74,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && route === '/app.js') {
       res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
       return res.end(APP_JS);
+    }
+    if (req.method === 'GET' && route === '/library.js') {
+      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
+      return res.end(LIBRARY_JS);
     }
     if (req.method === 'GET' && route === '/app.css') {
       res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' });
@@ -199,6 +206,7 @@ wss.on('connection', (ws, req) => {
     try { m = JSON.parse(raw); } catch { return ws.close(4002, 'bad json'); }
     if (!m || typeof m.t !== 'string') return;
     if (m.t === 'cover' && !spend(9)) return ws.close(4012, 'rate limited');
+    if ((m.t === 'queue' || m.t === 'art' || m.t === 'browse-result') && !spend(2)) return ws.close(4012, 'rate limited');
 
     // ---- handshake ----
     if (!id) {
@@ -243,6 +251,14 @@ wss.on('connection', (ws, req) => {
           return remoteOnly ? undefined : hub.relayToCompatible(id, { t: 'queue-changed', from: id });
         case 'cover':
           return remoteOnly ? undefined : void hub.setCover(id, m);
+        case 'queue': // players only: a window of their queue
+          return remoteOnly ? undefined : void hub.reportQueue(id, m.queue);
+        case 'browse': // anyone: look something up in the library of a player
+          return void library.browse(id, typeof m.to === 'string' ? m.to : null, m.rid, m.req);
+        case 'browse-result':
+          return remoteOnly ? undefined : void library.browseResult(id, m.rid, m.result, m.error);
+        case 'art':
+          return remoteOnly ? undefined : void library.artReceived(id, m);
         case 'settings': {
           if (remoteOnly) return;
           const cat = hub.updateSettings(m, ws);
@@ -261,7 +277,7 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     clearTimeout(helloTimer);
-    if (id) hub.leave(id, ws);
+    if (id && hub.leave(id, ws)) library.deviceLeft(id);
   });
   ws.on('error', () => {});
 });

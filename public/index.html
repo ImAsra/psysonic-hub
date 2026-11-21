@@ -131,6 +131,51 @@
     </div>
   </section>
  
+  <section id="queueCard" class="card hidden">
+    <h2 data-i18n="queue.title">Up next</h2>
+    <div id="queueList" class="rows"></div>
+    <div id="queueMore" class="sub gap-top-sm"></div>
+  </section>
+
+  <section id="libraryCard" class="card hidden">
+    <h2 data-i18n="library.title">Library</h2>
+    <form id="searchForm" class="search" role="search">
+      <input id="search" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
+        placeholder="Search" data-i18n-placeholder="library.search">
+    </form>
+    <div id="libTabs" class="chips">
+      <button type="button" class="chip-btn" data-tab="albums" data-i18n="library.albums">Albums</button>
+      <button type="button" class="chip-btn" data-tab="artists" data-i18n="library.artists">Artists</button>
+      <button type="button" class="chip-btn" data-tab="playlists" data-i18n="library.playlists">Playlists</button>
+    </div>
+    <div id="albumSorts" class="chips small">
+      <button type="button" class="chip-btn" data-sort="newest" data-i18n="library.sort.newest">Newest</button>
+      <button type="button" class="chip-btn" data-sort="recent" data-i18n="library.sort.recent">Recently played</button>
+      <button type="button" class="chip-btn" data-sort="frequent" data-i18n="library.sort.frequent">Most played</button>
+      <button type="button" class="chip-btn" data-sort="random" data-i18n="library.sort.random">Random</button>
+      <button type="button" class="chip-btn" data-sort="alphabeticalByName" data-i18n="library.sort.name">A–Z</button>
+      <button type="button" class="chip-btn" data-sort="starred" data-i18n="library.sort.starred">Favourites</button>
+    </div>
+    <div id="libHead" class="lib-head hidden">
+      <button id="libBack" type="button" class="link-btn" data-i18n="library.back">‹ Back</button>
+      <div class="lib-hero">
+        <img id="libArt" class="lib-art hidden" alt="">
+        <div class="meta">
+          <div id="libTitle" class="title"></div>
+          <div id="libSub" class="artist"></div>
+        </div>
+      </div>
+      <div id="libActions" class="lib-actions">
+        <button type="button" class="btn" data-mode="play" data-i18n="library.play">Play</button>
+        <button type="button" class="btn ghost" data-mode="next" data-i18n="library.playNext">Play next</button>
+        <button type="button" class="btn ghost" data-mode="add" data-i18n="library.addToQueue">Add to queue</button>
+      </div>
+    </div>
+    <div id="libBody"></div>
+    <div id="libMsg" class="sub gap-top-sm"></div>
+    <button id="libMore" type="button" class="btn ghost block hidden" data-i18n="library.more">Load more</button>
+  </section>
+
   <section id="devicesCard" class="card hidden">
     <h2 data-i18n="devices.playOn">Play on</h2>
     <div id="devices"></div>
@@ -149,6 +194,7 @@
 </main>
  
 <script src="/app.js"></script>
+<script src="/library.js"></script>
 </body>
 </html>
  

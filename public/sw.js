@@ -2,8 +2,8 @@
 // app opens (and shows "Reconnecting…") while the hub is unreachable.
 // Shell files are network-first, so a hub update is picked up on the next load.
 // Sign-in, the API and the WebSocket are never cached.
-const CACHE = 'psysonic-hub-shell-v1';
-const SHELL = ['/', '/app.js', '/app.css', '/manifest.webmanifest', '/icon.png', '/icon-maskable.png'];
+const CACHE = 'psysonic-hub-shell-v2';
+const SHELL = ['/', '/app.js', '/library.js', '/app.css', '/manifest.webmanifest', '/icon.png', '/icon-maskable.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
