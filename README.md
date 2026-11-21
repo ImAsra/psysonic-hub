@@ -146,12 +146,13 @@ Planned or under consideration, roughly in this order:
 
 ```sh
 npm ci --ignore-scripts
-HUB_TOKEN=a-long-test-token-123 HUB_USER=me HUB_PASSWORD=a-long-password npm start
-npm run typecheck
-npm test
+npm run build                     # the web remote, into web/dist
+HUB_TOKEN=a-long-test-token-123 HUB_USER=me HUB_PASSWORD=a-long-password npm run dev
+npm run dev:web                   # the web remote with hot reload, talking to the hub on :5533
+npm run check                     # typecheck, lint, format check and all tests
 ```
 
-The server is TypeScript run directly by Node (no build step); `shared/protocol.ts` holds the message types. `tools/remote.ts` is a tiny command-line remote and `tools/fakeplayer.ts` a fake second player, handy for trying things without another device.
+The server is TypeScript run directly by Node (no build step). The web remote (`web/`) is React and TypeScript built with Vite, styled with Psysonic's theme tokens. `shared/protocol.ts` holds the message types both use. `tools/remote.ts` is a tiny command-line remote and `tools/fakeplayer.ts` a fake second player, handy for trying things without another device.
 
 ## License
 

@@ -2,7 +2,9 @@
 //   HUB_TOKEN=... node tools/remote.js [ws://127.0.0.1:5533/ws]
 // Commands: toggle | play | pause | next | prev | seek 1:30 | seek 90 | seek +10 | seek -10 | vol 0.5 | devices
 import readline from 'node:readline';
+
 import WebSocket from 'ws';
+
 import type { TestSocket } from '../test/types.ts';
 
 

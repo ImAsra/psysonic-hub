@@ -1,0 +1,11 @@
+web/dist
+node_modules
+package-lock.json
+server
+test
+tools
+docs
+*.md
+.github
+compose.yaml
+web/src/locales

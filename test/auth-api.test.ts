@@ -1,7 +1,9 @@
 // Tests for the web login, the REST API, the event stream and cover art.
-import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+
 import WebSocket from 'ws';
+
 import { body, type TestProc, type TestSocket } from './types.ts';
 
 
@@ -15,6 +17,8 @@ async function startHub(port, env = {}) {
   const srv = spawn('node', ['server/index.ts'], {
     env: { ...process.env, PORT: String(port), HUB_TOKEN: TOKEN, HUB_DATA_DIR: '', ...env },
   }) as TestProc;
+
+  process.once('exit', () => srv.kill());
   await new Promise((r) => srv.stdout.once('data', r));
   return srv;
 }
@@ -263,6 +267,8 @@ try {
 
 // ================= startup validation =================
 const bad = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5594', HUB_TOKEN: TOKEN, HUB_USER: 'a', HUB_PASSWORD: 'short' } }) as TestProc;
+
+process.once('exit', () => bad.kill());
 const code = await new Promise((r) => bad.on('exit', r));
 assert.equal(code, 1, 'refuses to start with a weak password');
 

@@ -1,3 +1,13 @@
+# Build the web remote.
+FROM node:26-alpine AS web
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY shared ./shared
+COPY web ./web
+RUN npm run build
+
+# Run the hub: TypeScript run directly by Node, plus the built page.
 FROM node:26-alpine
 ENV NODE_ENV=production
 WORKDIR /app
@@ -6,6 +16,7 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY server ./server
 COPY shared ./shared
 COPY public ./public
+COPY --from=web /app/web/dist ./web/dist
 # Shared settings survive restarts when /data is a volume (see compose.yaml)
 RUN mkdir -p /data && chown node:node /data
 ENV HUB_DATA_DIR=/data

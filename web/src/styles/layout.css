@@ -1,0 +1,77 @@
+/* desktop: use the whole page — left = player + connected devices, right = settings sync.
+   Below 900px the single-column mobile layout above is used unchanged. */
+@media (min-width: 900px) {
+  body {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  main {
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto auto; /* row 3 absorbs the extra height of the tall settings card */
+    column-gap: 20px;
+    align-items: start;
+  }
+  header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    flex-wrap: nowrap;
+  }
+  .brand {
+    flex: 1;
+  }
+  footer {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+
+  #login {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  #main {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 28px;
+  }
+  #devicesCard {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: stretch;
+  } /* fills the left column down to the settings card */
+  #syncCard {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
+  #queueCard {
+    grid-column: 1;
+    grid-row: 4;
+  }
+  #libraryCard {
+    grid-column: 2;
+    grid-row: 4;
+    min-width: 0;
+  }
+
+  .art {
+    width: 120px;
+    height: 120px;
+    border-radius: 18px;
+  }
+  .art svg {
+    width: 48px;
+    height: 48px;
+  }
+  .title {
+    font-size: 24px;
+  }
+  .transport {
+    gap: 26px;
+    margin-top: 22px;
+  }
+}

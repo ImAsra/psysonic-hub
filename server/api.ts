@@ -1,6 +1,7 @@
 // REST API for automations (Home Assistant, Stream Deck, shell scripts...) and a live event stream.
 // It only translates requests into the same commands the apps use; it never touches your music server.
 import type { IncomingMessage, ServerResponse } from 'node:http';
+
 import type { createAuth } from './auth.ts';
 import type { Config } from './config.ts';
 import type { ApiResult, createHub } from './core.ts';

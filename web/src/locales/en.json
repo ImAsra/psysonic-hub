@@ -73,5 +73,8 @@
   "library.timeout": "The player did not answer. Try again.",
   "library.failed": "Could not load this from the music server.",
   "library.albumCount": "{{count}} albums",
-  "library.songCount": "{{count}} songs"
+  "library.songCount": "{{count}} songs",
+  "login.lockedOut": "Too many failed attempts from this address. Try again in a few minutes.",
+  "login.tooManyConnections": "Too many connections from this address. Close other tabs and try again.",
+  "login.signOutFailed": "Could not sign out. Please try again."
 }

@@ -74,5 +74,8 @@
   "library.timeout": "El reproductor no respondió. Probá de nuevo.",
   "library.failed": "No se pudo cargar desde el servidor de música.",
   "library.albumCount": "{{count}} álbumes",
-  "library.songCount": "{{count}} canciones"
+  "library.songCount": "{{count}} canciones",
+  "login.lockedOut": "Demasiados intentos fallidos desde esta dirección. Probá de nuevo en unos minutos.",
+  "login.tooManyConnections": "Demasiadas conexiones desde esta dirección. Cerrá otras pestañas y probá de nuevo.",
+  "login.signOutFailed": "No se pudo cerrar la sesión. Probá de nuevo."
 }

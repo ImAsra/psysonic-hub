@@ -1,10 +1,12 @@
 // Hub core: devices, playback state, transfers, commands, shared settings and cover art.
 // Transport-agnostic: the WebSocket server and the REST API both call into this.
-import { EventEmitter } from 'node:events';
 import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+
 import type { WebSocket } from 'ws';
+
 import type { Device, DeviceKind, PlayerState, QueueTrack, QueueWindow, RelayedState, SyncCategory } from '../shared/protocol.ts';
 import { PROTOCOL } from '../shared/protocol.ts';
 
@@ -81,8 +83,8 @@ export function createHub({ dataDir = '', maxDevices = 16, serverCheck = true, y
 
   // ---- shared settings (persisted when a data dir is set) ----
   const settingsFile = dataDir ? path.join(dataDir, 'settings.json') : '';
-  let sharedSettings = nullObj<Json>();
-  let syncConfig = nullObj<boolean>(DEFAULT_CONFIG);
+  const sharedSettings = nullObj<Json>();
+  const syncConfig = nullObj<boolean>(DEFAULT_CONFIG);
   if (settingsFile) {
     try {
       const raw = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
@@ -428,7 +430,7 @@ export function createHub({ dataDir = '', maxDevices = 16, serverCheck = true, y
       volume: s?.volume ?? null,
       shuffle: s?.shuffle ?? null,
       repeat: s?.repeat ?? null,
-      devices: deviceList().filter((d) => d.kind !== 'web').map(({ server, ...d }) => d),
+      devices: deviceList().filter((d) => d.kind !== 'web').map(({ server: _server, ...d }) => d),
     };
   }
 

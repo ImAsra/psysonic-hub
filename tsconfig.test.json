@@ -6,8 +6,5 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": [
-    "test",
-    "tools"
-  ]
+  "include": ["test", "tools"]
 }

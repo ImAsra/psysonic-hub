@@ -1,12 +1,17 @@
 // Security regression tests: prototype safety, input limits, brute-force lockout, connection and message
 // limits, cross-site protections, cookie/HSTS behaviour, CSP, file-based secrets, weak-secret warnings.
-import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+
 import WebSocket from 'ws';
-import { body, type TestProc, type TestSocket } from './types.ts';
+
+import type { TestProc, TestSocket } from './types.ts';
+
+// Every hub this file starts is stopped when it exits, so there are more exit listeners than Node's default limit.
+process.setMaxListeners(50);
 
 
 const RAND = (n) => [...Array(n)].map(() => 'abcdef0123456789'[Math.floor(Math.random() * 16)]).join('');
@@ -22,6 +27,8 @@ async function startHub(port, env = {}) {
   const srv = spawn('node', ['server/index.ts'], {
     env: { ...process.env, PORT: String(port), HUB_TOKEN: TOKEN, HUB_DATA_DIR: '', ...env },
   }) as TestProc;
+
+  process.once('exit', () => srv.kill());
   srv.exited = null;
   srv.err = '';
   srv.stderr.on('data', (d) => (srv.err += d));
@@ -257,10 +264,12 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)[^>]*>/i, 'no inline <script>');
   assert.doesNotMatch(html, /<style[\s>]/i, 'no inline <style>');
   assert.doesNotMatch(html, /\sstyle=|\son[a-z]+=/i, 'no style attributes or inline event handlers');
-  const js = await fetch(`${base}/app.js`);
+  const script = html.match(/src="(\/assets\/[^"]+\.js)"/)?.[1];
+  const style = html.match(/href="(\/assets\/[^"]+\.css)"/)?.[1];
+  const js = await fetch(`${base}${script}`);
   assert.match(js.headers.get('content-type'), /javascript/);
-  assert.equal((await fetch(`${base}/app.css`)).status, 200);
-  for (const evil of ['/public/app.js', '/..%2Fserver.js', '/server/core.ts', '/lib/core.js', '/.env', '/package.json', '/app.js/../server.js']) {
+  assert.equal((await fetch(`${base}${style}`)).status, 200);
+  for (const evil of ['/public/icon.png/..', '/..%2Fserver.js', '/server/core.ts', '/web/src/main.tsx', '/web/dist/index.html', '/assets/../index.html', '/.env', '/package.json', `${script}/../../server/index.ts`]) {
     assert.equal((await fetch(`${base}${evil}`)).status, 404, evil);
   }
 
@@ -283,6 +292,8 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
 {
   const run = async (env) => {
     const p = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5546', HUB_TOKEN: TOKEN, ...env } }) as TestProc;
+
+    process.once('exit', () => p.kill());
     let err = '';
     p.stderr.on('data', (d) => (err += d));
     const code = await new Promise((r) => p.on('exit', r));
@@ -304,14 +315,6 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   assert.match(two.err, /API_TOKEN and API_TOKEN_READONLY are identical/);
 }
 
-// ======================= the page copes with the hub's limits =======================
-{
-  const js = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-  assert.match(js, /4011/, 'the page stops retrying when its address is locked out');
-  assert.match(js, /4010/);
-  assert.match(js, /100 - \(Date\.now\(\) - volSentAt\)/, 'volume commands from the slider are throttled');
-}
-
 // ======================= secrets from files, distinct secrets, weak-secret warning, clean shutdown =======================
 {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-secrets-'));
@@ -331,12 +334,18 @@ const send = (ws, m) => ws.send(JSON.stringify(m));
   assert.equal(srv.exited, 0, 'SIGTERM stops the hub cleanly');
 
   const missing = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5569', HUB_TOKEN: '', HUB_TOKEN_FILE: path.join(dir, 'nope') } }) as TestProc;
+
+
+  process.once('exit', () => missing.kill());
   let merr = '';
   missing.stderr.on('data', (d) => (merr += d));
   assert.equal(await new Promise((r) => missing.on('exit', r)), 1);
   assert.match(merr, /HUB_TOKEN_FILE could not be read/);
 
   const same = spawn('node', ['server/index.ts'], { env: { ...process.env, PORT: '5569', HUB_TOKEN: TOKEN, API_TOKEN: TOKEN } }) as TestProc;
+
+
+  process.once('exit', () => same.kill());
   let serr = '';
   same.stderr.on('data', (d) => (serr += d));
   assert.equal(await new Promise((r) => same.on('exit', r)), 1);

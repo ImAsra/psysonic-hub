@@ -1,15 +1,20 @@
 // psysonic-hub: optional self-hosted realtime hub (Spotify Connect style).
 // Relays state + commands between a user's own devices. Never touches audio and
 // never talks to your music server. See README.md and docs/.
-import http from 'node:http';
 import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { type WebSocket, WebSocketServer } from 'ws';
-import { loadConfig } from './config.ts';
-import { createAuth } from './auth.ts';
-import { createHub, PROTOCOL } from './core.ts';
+
 import { createApi } from './api.ts';
+import { createAuth } from './auth.ts';
+import { loadConfig } from './config.ts';
+import { createHub, PROTOCOL } from './core.ts';
+import { baseHeaders, BRAND_CSP, readJson, sendJson, setSecureCheck } from './http.ts';
 import { createLibrary } from './library.ts';
-import { BRAND_CSP, baseHeaders, readJson, sendJson, setSecureCheck } from './http.ts';
+import { loadStaticFiles } from './static.ts';
 
 const { cfg, errors, warnings } = loadConfig();
 if (errors.length) {
@@ -35,22 +40,13 @@ const PING_MS = 30000;
 /** A connection, plus what the server tracks about it. */
 type Conn = WebSocket & { isAlive?: boolean; sessionId?: string };
 
-const readPublic = (f: string) => fs.readFileSync(new URL(`../public/${f}`, import.meta.url));
-const PAGE = readPublic('index.html');
-const APP_JS = readPublic('app.js');
-const APP_CSS = readPublic('app.css');
-const LIBRARY_JS = readPublic('library.js');
-const SW_JS = readPublic('sw.js');
-const getLocale = (route: string) => {
-  const match = route.match(/^\/locales\/([a-z]{2}(?:-[A-Z]{2})?)\.json$/);
-  if (!match) return null;
-
-  try {
-    return readPublic(`locales/${match[1]}.json`);
-  } catch {
-    return null;
-  }
-};
+// The web remote, built by `npm run build` into web/dist.
+const WEB_DIST = fileURLToPath(new URL('../web/dist', import.meta.url));
+if (!fs.existsSync(path.join(WEB_DIST, 'index.html'))) {
+  console.error(`The web remote is not built (${WEB_DIST} is missing): run "npm run build" first.`);
+  process.exit(1);
+}
+const WEB = loadStaticFiles(WEB_DIST);
 const MANIFEST = JSON.stringify({
   id: '/', name: 'Psysonic Remote', short_name: 'Psysonic', description: 'Control Psysonic on your devices',
   start_url: '/', scope: '/', display: 'standalone', orientation: 'portrait',
@@ -67,42 +63,14 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://hub');
   const route = url.pathname;
   try {
-    if (req.method === 'GET' && route === '/') {
+    const file = req.method === 'GET' ? WEB.get(route) : undefined;
+    if (file) {
       res.writeHead(200, {
-        ...baseHeaders(req), 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache',
-        'cross-origin-opener-policy': 'same-origin',
+        ...baseHeaders(req), 'content-type': file.type, 'cache-control': file.cache,
+        ...(route === '/' ? { 'cross-origin-opener-policy': 'same-origin' } : {}),
       });
-      return res.end(PAGE);
+      return res.end(file.body);
     }
-    if (req.method === 'GET' && route === '/app.js') {
-      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
-      return res.end(APP_JS);
-    }
-    if (req.method === 'GET' && route === '/library.js') {
-      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
-      return res.end(LIBRARY_JS);
-    }
-    if (req.method === 'GET' && route === '/app.css') {
-      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-cache' });
-      return res.end(APP_CSS);
-    }
-    if (req.method === 'GET' && route === '/sw.js') {
-      // no-cache: the browser checks for a newer service worker on every load
-      res.writeHead(200, { ...baseHeaders(req), 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' });
-      return res.end(SW_JS);
-    }
-    if (req.method === 'GET') {
-       const locale = getLocale(route);
-
-        if (locale) {
-          res.writeHead(200, {
-            ...baseHeaders(req),
-            'content-type': 'application/json; charset=utf-8',
-            'cache-control': 'no-cache',
-          });
-          return res.end(locale);
-        }
-      }
     if (req.method === 'GET' && BRAND[route]) {
       return fs.readFile(new URL(`../public${route}`, import.meta.url), (err, data) => {
         if (err) return res.writeHead(404, baseHeaders(req)).end();

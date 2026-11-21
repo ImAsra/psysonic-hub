@@ -1,22 +1,31 @@
 // Smoke test: auth, device list, state relay, command relay, transfer.
-import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+
 import WebSocket from 'ws';
+
 import { body, type TestProc, type TestSocket } from './types.ts';
 
 
 const TOKEN = 'test-token-1234567890';
 const PORT = 5599;
 const srv = spawn('node', ['server/index.ts'], { env: { ...process.env, HUB_TOKEN: TOKEN, PORT: String(PORT) } }) as TestProc;
+
+process.once('exit', () => srv.kill());
 await new Promise((r) => srv.stdout.once('data', r));
 
 const page = await fetch(`http://127.0.0.1:${PORT}/`);
 assert.equal(page.status, 200);
-assert.match(await page.text(), /Psysonic Hub/);
-const locale = await fetch(`http://127.0.0.1:${PORT}/locales/en.json`);
-assert.equal(locale.status, 200);
-assert.equal(locale.headers.get('content-type').split(';')[0], 'application/json');
-assert.equal((await body(locale))['language.en'], 'English');
+const html = await page.text();
+assert.match(html, /Psysonic Hub/);
+// the built page's script is served, with a long cache (its name changes with its content)
+const script = html.match(/src="(\/assets\/[^"]+\.js)"/)?.[1];
+assert.ok(script, 'the page loads its script from /assets/');
+const js = await fetch(`http://127.0.0.1:${PORT}${script}`);
+assert.equal(js.status, 200);
+assert.equal(js.headers.get('content-type').split(';')[0], 'text/javascript');
+assert.match(js.headers.get('cache-control'), /immutable/);
+assert.equal((await fetch(`http://127.0.0.1:${PORT}/assets/nope.js`)).status, 404);
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/etc/passwd`)).status, 404);
 // branding files are optional: served when present, plain 404 otherwise (never an error)
 assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/logo.svg`)).status));

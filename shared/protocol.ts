@@ -57,13 +57,7 @@ export interface QueueWindow {
 }
 
 export type AlbumSort =
-  | 'newest'
-  | 'recent'
-  | 'frequent'
-  | 'random'
-  | 'alphabeticalByName'
-  | 'alphabeticalByArtist'
-  | 'starred';
+  'newest' | 'recent' | 'frequent' | 'random' | 'alphabeticalByName' | 'alphabeticalByArtist' | 'starred';
 
 export type BrowseRequest =
   | { kind: 'albums'; sort: AlbumSort; offset: number }

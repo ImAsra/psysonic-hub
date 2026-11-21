@@ -7,7 +7,7 @@ data
 docs
 tools
 test
-tsconfig*.json
+web/dist
 *.md
 compose.yaml
 docker-compose.yml

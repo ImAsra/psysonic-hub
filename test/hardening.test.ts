@@ -1,8 +1,10 @@
 // Regression tests for the issues found in review: server/account matching, safe handoff,
 // sockets ending with their login session, malformed input, per-device relative commands.
-import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+
 import WebSocket from 'ws';
+
 import { body, type TestProc, type TestSocket } from './types.ts';
 
 
@@ -17,6 +19,8 @@ async function startHub(port, env = {}) {
   const srv = spawn('node', ['server/index.ts'], {
     env: { ...process.env, PORT: String(port), HUB_TOKEN: TOKEN, HUB_DATA_DIR: '', ...env },
   }) as TestProc;
+
+  process.once('exit', () => srv.kill());
   srv.exited = null;
   srv.on('exit', (c) => (srv.exited = c ?? -1));
   await new Promise((r) => srv.stdout.once('data', r));

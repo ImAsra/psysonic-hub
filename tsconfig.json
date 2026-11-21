@@ -3,12 +3,8 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": [
-      "esnext"
-    ],
-    "types": [
-      "node"
-    ],
+    "lib": ["esnext"],
+    "types": ["node"],
     "strict": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
@@ -19,8 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
-  "include": [
-    "server",
-    "shared"
-  ]
+  "include": ["server", "shared"]
 }

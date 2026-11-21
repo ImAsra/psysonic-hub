@@ -7,10 +7,11 @@
 //   play    -> start "playing" locally (desktop should get told to pause)
 //   pause   -> stop playing locally
 import readline from 'node:readline';
-import WebSocket from 'ws';
-
 // A tiny solid-colour PNG, uploaded as the "cover" whenever this fake player starts playing.
 import zlib from 'node:zlib';
+
+import WebSocket from 'ws';
+
 import type { TestSocket } from '../test/types.ts';
 
 const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });

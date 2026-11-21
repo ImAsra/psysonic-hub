@@ -1,13 +1,17 @@
 // Queue windows, library browsing and artwork, all relayed through a player.
-import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+
 import WebSocket from 'ws';
-import { body, type TestProc, type TestSocket } from './types.ts';
+
+import type { TestProc, TestSocket } from './types.ts';
 
 
 const TOKEN = 'test-token-1234567890';
 const PORT = 5597;
 const srv = spawn('node', ['server/index.ts'], { env: { ...process.env, HUB_TOKEN: TOKEN, PORT: String(PORT) } }) as TestProc;
+
+process.once('exit', () => srv.kill());
 await new Promise((r) => srv.stdout.once('data', r));
 
 const connect = (deviceId, kind) =>
