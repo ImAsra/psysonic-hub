@@ -1,4 +1,4 @@
-/* desktop: use the whole page — left = player + connected devices, right = settings sync.
+/* desktop: use the whole page (two columns per page, see below).
    Below 900px the single-column mobile layout above is used unchanged. */
 @media (min-width: 900px) {
   body {
@@ -9,7 +9,7 @@
     max-width: 1200px;
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr auto auto; /* row 3 absorbs the extra height of the tall settings card */
+    grid-template-rows: auto auto 1fr auto auto; /* row 3 absorbs the height difference between the columns */
     column-gap: 20px;
     align-items: start;
   }
@@ -34,6 +34,7 @@
     max-width: 440px;
   }
 
+  /* remote: player and devices on the left, the queue beside them, the library across the bottom */
   #main {
     grid-column: 1;
     grid-row: 2;
@@ -42,20 +43,36 @@
   #devicesCard {
     grid-column: 1;
     grid-row: 3;
+  }
+  #queueCard {
+    grid-column: 2;
+    grid-row: 2 / span 2;
     align-self: stretch;
-  } /* fills the left column down to the settings card */
+    display: flex;
+    flex-direction: column;
+    /* the left column decides the height; a long queue scrolls inside the card instead of stretching the page */
+    contain: size;
+    min-height: 320px;
+  }
+  #queueCard .rows {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+  #libraryCard {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    min-width: 0;
+  }
+
+  /* settings: connecting a player on the left, settings sync on the right */
+  #connectCard {
+    grid-column: 1;
+    grid-row: 2;
+  }
   #syncCard {
     grid-column: 2;
     grid-row: 2 / span 2;
-  }
-  #queueCard {
-    grid-column: 1;
-    grid-row: 4;
-  }
-  #libraryCard {
-    grid-column: 2;
-    grid-row: 4;
-    min-width: 0;
   }
 
   .art {

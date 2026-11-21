@@ -15,6 +15,7 @@ import { createHub, PROTOCOL } from './core.ts';
 import { baseHeaders, BRAND_CSP, readJson, sendJson, setSecureCheck } from './http.ts';
 import { createLibrary } from './library.ts';
 import { loadStaticFiles } from './static.ts';
+import { createDeviceToken } from './tokens.ts';
 
 const { cfg, errors, warnings } = loadConfig();
 if (errors.length) {
@@ -23,7 +24,14 @@ if (errors.length) {
 }
 for (const w of warnings) console.warn(`[security] ${w}`);
 
-const auth = createAuth(cfg);
+const deviceToken = createDeviceToken({ envToken: cfg.token, dataDir: cfg.dataDir });
+if (deviceToken.fresh) {
+  // Shown once, so the first sign-in is possible; afterwards it is on the web page under Settings.
+  console.log(`Generated a device token for the Psysonic apps (also shown in the web page's Settings): ${deviceToken.get()}`);
+  if (!cfg.dataDir) console.warn('[hub] HUB_DATA_DIR is not set: this token changes on every restart.');
+}
+
+const auth = createAuth(cfg, deviceToken.get);
 setSecureCheck(auth.isSecure);
 const hub = createHub({
   dataDir: cfg.dataDir, maxDevices: cfg.maxDevices, serverCheck: cfg.serverCheck, yieldTimeoutMs: cfg.yieldTimeoutMs,
@@ -38,7 +46,7 @@ const PING_MS = 30000;
 
 // ---- static files: fixed routes only (no filesystem path ever comes from a request) ----
 /** A connection, plus what the server tracks about it. */
-type Conn = WebSocket & { isAlive?: boolean; sessionId?: string };
+type Conn = WebSocket & { isAlive?: boolean; sessionId?: string; byToken?: boolean };
 
 // The web remote, built by `npm run build` into web/dist.
 const WEB_DIST = fileURLToPath(new URL('../web/dist', import.meta.url));
@@ -90,6 +98,9 @@ const server = http.createServer(async (req, res) => {
     if (route === '/auth/me' && req.method === 'GET') {
       return auth.sessionFromReq(req) ? sendJson(res, 200, { ok: true }) : sendJson(res, 401, { error: 'unauthorized' });
     }
+    // ---- settings: the device token (signed-in page only, never the read-only API token) ----
+    if (route === '/settings/token') return handleTokenSettings(req, res);
+
     if (route.startsWith('/auth/') && req.method === 'POST') {
       // Only this site's own page may sign in or out (no cross-site form posts).
       const same = auth.sameSitePost(req);
@@ -123,6 +134,36 @@ const server = http.createServer(async (req, res) => {
     res.end();
   }
 });
+
+/**
+ * GET: the device token and whether it can be regenerated. POST: regenerate it; every device that
+ * signed in with the old token is disconnected. Allowed for the web login session or the device token
+ * itself (token mode), never for the API tokens.
+ */
+function handleTokenSettings(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== 'GET' && req.method !== 'POST') return sendJson(res, 405, { error: 'method_not_allowed' });
+  const wait = auth.blockedFor(req);
+  if (wait) return sendJson(res, 429, { error: 'too_many_failed_attempts' }, { 'retry-after': String(wait) });
+  const bearer = /^Bearer\s+(.+)$/i.exec(String(req.headers.authorization || ''))?.[1];
+  const bySession = !bearer && !!auth.sessionFromReq(req);
+  if (!bySession && !(bearer && auth.tokenOk(bearer))) {
+    if (bearer) auth.penalize(req, 9);
+    return sendJson(res, 401, { error: 'unauthorized' });
+  }
+  if (req.method === 'GET') {
+    return sendJson(res, 200, { token: deviceToken.get(), source: deviceToken.source });
+  }
+  if (bySession) {
+    // A cookie travels with cross-site requests: only this site's own page may regenerate.
+    const same = auth.sameSitePost(req);
+    if (!same.ok) return sendJson(res, same.status, { error: same.status === 415 ? 'json_required' : 'cross_site_request' });
+  }
+  if (deviceToken.source === 'env') return sendJson(res, 409, { error: 'token_from_env' });
+  const token = deviceToken.regenerate();
+  for (const c of wss.clients as Set<Conn>) if (c.byToken) c.close(4005, 'token changed');
+  console.log('[hub] the device token was regenerated; devices using the old one were disconnected');
+  return sendJson(res, 200, { token, source: deviceToken.source });
+}
 
 // Slow-loris protection: a request must arrive promptly, idle connections are dropped.
 server.headersTimeout = 10_000;
@@ -197,6 +238,7 @@ wss.on('connection', (ws, req) => {
       id = m.deviceId;
       remoteOnly = kind === 'web';
       if (!byToken && sessionId) conn.sessionId = sessionId; // tied to the login session: ends when it ends
+      conn.byToken = byToken; // signed in with the device token: ends when the token is regenerated
       return;
     }
 

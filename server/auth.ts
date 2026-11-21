@@ -22,7 +22,8 @@ export const COOKIE_SECURE = '__Host-hub_session'; // the __Host- prefix makes b
 const sha = (s: unknown) => crypto.createHash('sha256').update(String(s)).digest();
 const same = (a: unknown, b: unknown) => crypto.timingSafeEqual(sha(a), sha(b)); // constant time, length-independent
 
-export function createAuth(cfg: Config) {
+/** `token` is the current device token (it can change while the hub runs). */
+export function createAuth(cfg: Config, token: () => string) {
   const mode = cfg.password ? 'password' : 'token';
   const salt = crypto.randomBytes(16);
   const pwKey = cfg.password ? crypto.scryptSync(cfg.password, salt, 32) : null;
@@ -180,7 +181,7 @@ export function createAuth(cfg: Config) {
     if (bearer) {
       if (cfg.apiToken && same(bearer, cfg.apiToken)) return { level: 'full' };
       if (cfg.apiTokenReadonly && same(bearer, cfg.apiTokenReadonly)) return { level: 'read' };
-      if (same(bearer, cfg.token)) return { level: 'read' };
+      if (same(bearer, token())) return { level: 'read' };
       return { level: null, attempted: true };
     }
     const key = url.searchParams.get('key');
@@ -203,6 +204,6 @@ export function createAuth(cfg: Config) {
     },
     /** Still valid? (does not extend the session) */
     sessionActive: (id: string) => alive(sessions.get(id)),
-    tokenOk: (t: unknown) => typeof t === 'string' && same(t, cfg.token),
+    tokenOk: (t: unknown) => typeof t === 'string' && same(t, token()),
   };
 }

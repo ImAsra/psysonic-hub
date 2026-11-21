@@ -76,5 +76,21 @@
   "library.songCount": "{{count}} songs",
   "login.lockedOut": "Too many failed attempts from this address. Try again in a few minutes.",
   "login.tooManyConnections": "Too many connections from this address. Close other tabs and try again.",
-  "login.signOutFailed": "Could not sign out. Please try again."
+  "login.signOutFailed": "Could not sign out. Please try again.",
+  "settings.title": "Settings",
+  "nav.remote": "Remote",
+  "connect.title": "Connect a player",
+  "connect.intro": "In Psysonic, open Settings → Integrations → Realtime hub, switch it on and enter these.",
+  "connect.address": "Hub address",
+  "connect.token": "Device token",
+  "connect.copy": "Copy",
+  "connect.copied": "Copied",
+  "connect.show": "Show token",
+  "connect.hide": "Hide token",
+  "connect.regenerate": "Regenerate token",
+  "connect.regenerateConfirm": "Every Psysonic app using the current token is disconnected until you enter the new one in it.",
+  "connect.regenerateYes": "Regenerate",
+  "connect.cancel": "Cancel",
+  "connect.fromEnv": "This token is set by HUB_TOKEN on the server. To replace it, change it there.",
+  "connect.failed": "Could not load or change the token."
 }

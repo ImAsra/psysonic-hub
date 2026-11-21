@@ -13,11 +13,11 @@ You need Docker with Compose. Put `compose.yaml` and `.env` in a folder:
 
 ```sh
 cp .env.example .env
-# edit .env: set HUB_TOKEN, and HUB_USER + HUB_PASSWORD for the web page
+# edit .env: set HUB_USER + HUB_PASSWORD for the web page
 docker compose up -d
 ```
 
-Then open `http://<server>:5533/` and sign in. In Psysonic, go to **Settings → Integrations → Realtime hub**, switch it on, and enter the hub address (`http://<server>:5533`) and your `HUB_TOKEN`.
+Then open `http://<server>:5533/` and sign in. Under **Settings** the page shows the hub address and the device token to enter in Psysonic (**Settings → Integrations → Realtime hub**), and can regenerate the token. The hub creates the token on its first start and keeps it in its data volume; the first start also prints it to the log (`docker compose logs`).
 
 Check it is up: `curl http://<server>:5533/health`.
 
@@ -26,8 +26,8 @@ Check it is up: `curl http://<server>:5533/health`.
 
 | Variable | Required | What it does |
 |---|---|---|
-| `HUB_TOKEN` | yes | Used by the Psysonic apps. 16+ characters. |
-| `HUB_USER`, `HUB_PASSWORD` | no | Web page login. Password 10+ characters. If unset, the page asks for `HUB_TOKEN`. |
+| `HUB_TOKEN` | no | The device token the Psysonic apps sign in with, 16+ characters. Without it the hub generates one (see above); when set, it always wins and cannot be regenerated from the page. |
+| `HUB_USER`, `HUB_PASSWORD` | no | Web page login. Password 10+ characters. If unset, the page asks for the device token. |
 | `API_TOKEN` | no | Full control over the REST API. 24+ characters. API control is off without it. |
 | `API_TOKEN_READONLY` | no | Read-only API access (state, devices, cover art, events). |
 | `HUB_PUBLIC_URL` | no | Makes `cover_url` in the API an absolute link, e.g. `https://hub.example.com`. |

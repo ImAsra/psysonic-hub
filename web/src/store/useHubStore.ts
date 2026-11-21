@@ -4,6 +4,7 @@ import type {
   AuthMode,
   ConnectionStatus,
   Device,
+  Page,
   QueueWindow,
   RelayedState,
   SyncCategory,
@@ -26,6 +27,8 @@ export interface HubState {
   syncConfig: SyncConfig;
   /** The hub welcomed this page at least once since signing in (the player cards show from then on). */
   welcomed: boolean;
+  /** Which page of the remote is shown. */
+  page: Page;
 }
 
 export const initialHubState: HubState = {
@@ -39,6 +42,7 @@ export const initialHubState: HubState = {
   catalog: [],
   syncConfig: {},
   welcomed: false,
+  page: 'remote',
 };
 
 /** What the hub told this page. Written by the connection, read by the components. */

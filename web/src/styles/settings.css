@@ -1,0 +1,55 @@
+.copy-field {
+  margin-top: 14px;
+}
+.copy-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.copy-row input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+}
+.icon-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.icon-label svg {
+  width: 16px;
+  height: 16px;
+}
+.icon-btn.small {
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+.icon-btn.small svg {
+  width: 18px;
+  height: 18px;
+}
+.confirm {
+  padding: 14px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.confirm p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.btn.danger {
+  color: var(--on-accent);
+  background: var(--danger);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

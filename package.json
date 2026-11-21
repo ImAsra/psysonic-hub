@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run build && npm run test:server && npm run test:web",
-    "test:server": "node test/hub.test.ts && node test/library.test.ts && node test/auth-api.test.ts && node test/hardening.test.ts && node test/security.test.ts",
+    "test:server": "node test/hub.test.ts && node test/library.test.ts && node test/tokens.test.ts && node test/auth-api.test.ts && node test/hardening.test.ts && node test/security.test.ts",
     "test:web": "vitest run --config web/vite.config.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },

@@ -1,4 +1,4 @@
-// Environment configuration. Everything is optional except HUB_TOKEN.
+// Environment configuration. Everything is optional.
 import fs from 'node:fs';
 
 type Env = Record<string, string | undefined>;
@@ -63,7 +63,7 @@ export function loadConfig(env: Env = process.env): { cfg: Config; errors: strin
   const cfg: Config = {
     port: whole(env, 'PORT', 5533, 1, 65535, errors),
     bind: env.HUB_BIND || '0.0.0.0', // use 127.0.0.1 when only a local reverse proxy should reach the hub
-    token: secret(env, 'HUB_TOKEN', errors), // used by the Psysonic apps
+    token: secret(env, 'HUB_TOKEN', errors), // used by the Psysonic apps; generated when empty
     maxDevices: whole(env, 'MAX_DEVICES', 16, 1, 1000, errors),
     dataDir: env.HUB_DATA_DIR || '',
     user: env.HUB_USER || '', // web UI login (optional; without it the page asks for HUB_TOKEN)
@@ -79,7 +79,8 @@ export function loadConfig(env: Env = process.env): { cfg: Config; errors: strin
     maxConnectionsPerIp: whole(env, 'HUB_MAX_CONNECTIONS_PER_IP', 16, 1, 10000, errors),
     publicUrl: (env.HUB_PUBLIC_URL || '').replace(/\/+$/, ''), // makes cover_url absolute in /api/state
   };
-  if (cfg.token.length < 16) errors.push('HUB_TOKEN must be set and at least 16 characters.');
+  // Without HUB_TOKEN the hub generates one (see tokens.ts); a token you set must be long enough.
+  if (cfg.token && cfg.token.length < 16) errors.push('HUB_TOKEN must be at least 16 characters.');
   if (cfg.password || cfg.user) {
     if (!cfg.user) errors.push('HUB_USER is required when HUB_PASSWORD is set.');
     if (cfg.password.length < 10) errors.push('HUB_PASSWORD must be at least 10 characters.');

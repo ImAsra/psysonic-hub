@@ -4,11 +4,13 @@ import { signOut } from '../../hub/signOut.ts';
 import { useHubStore } from '../../store/useHubStore.ts';
 import { LanguagePicker } from './LanguagePicker.tsx';
 import { Logo } from './Logo.tsx';
+import { PageSwitch } from './PageSwitch.tsx';
 import { StatusPill } from './StatusPill.tsx';
 
 export function Header() {
   const { t } = useTranslation();
   const canSignOut = useHubStore((s) => s.mode === 'password' && !s.login.visible && s.status !== 'notConnected');
+  const inside = useHubStore((s) => s.welcomed && !s.login.visible);
 
   return (
     <header>
@@ -18,6 +20,7 @@ export function Header() {
       </div>
       <LanguagePicker />
       <StatusPill />
+      {inside && <PageSwitch />}
       {canSignOut && (
         <button className="link-btn" type="button" onClick={() => void signOut()}>
           {t('login.signOut')}
