@@ -318,6 +318,9 @@ function connect() {
   };
 
   ws.onclose = (e) => {
+    // Lookups in flight are lost with the connection: the library reloads after the next welcome.
+    refreshLibraryCard();
+
     // The hub refuses this address for now: stop retrying.
     if (e.code === 4011 || e.code === 4010) {
       setStatus(
@@ -410,6 +413,8 @@ async function signOut() {
     ws.onclose = null;
     ws.close();
   }
+
+  refreshLibraryCard(); // the closed connection drops the library's pending lookups
 
   state = null;
   coverTrack = '';
