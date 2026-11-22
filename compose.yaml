@@ -1,7 +1,7 @@
 # Psysonic Hub. Put this file and your ".env" (see .env.example) in a folder, then:
 services:
   psysonic-hub:
-    image: ghcr.io/imasra/psysonic-hub:0.2
+    image: ghcr.io/imasra/psysonic-hub:0.3
     container_name: psysonic-hub
     restart: unless-stopped
     env_file: .env
