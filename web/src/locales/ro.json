@@ -92,5 +92,10 @@
   "connect.regenerateYes": "Generează",
   "connect.cancel": "Anulează",
   "connect.fromEnv": "Acest token este setat de HUB_TOKEN pe server. Pentru a-l înlocui, schimbă-l acolo.",
-  "connect.failed": "Tokenul nu a putut fi încărcat sau schimbat."
+  "connect.failed": "Tokenul nu a putut fi încărcat sau schimbat.",
+  "empty.title": "Niciun player conectat",
+  "empty.text": "Deschide Psysonic pe un dispozitiv cu hubul activat și va apărea aici, gata de control.",
+  "empty.connect": "Conectează un player",
+  "queue.empty": "Coada este goală",
+  "queue.emptyHint": "Alege un album, un playlist sau o piesă din bibliotecă pentru a începe."
 }

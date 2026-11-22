@@ -92,5 +92,10 @@
   "connect.regenerateYes": "Nieuw maken",
   "connect.cancel": "Annuleren",
   "connect.fromEnv": "Dit token wordt ingesteld door HUB_TOKEN op de server. Wijzig het daar om het te vervangen.",
-  "connect.failed": "Kon het token niet laden of wijzigen."
+  "connect.failed": "Kon het token niet laden of wijzigen.",
+  "empty.title": "Geen spelers verbonden",
+  "empty.text": "Open Psysonic op een apparaat met de hub aan en het verschijnt hier, klaar om te bedienen.",
+  "empty.connect": "Een speler verbinden",
+  "queue.empty": "Niets in de wachtrij",
+  "queue.emptyHint": "Kies een album, playlist of nummer uit de bibliotheek om te beginnen."
 }

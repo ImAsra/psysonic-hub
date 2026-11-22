@@ -92,5 +92,10 @@
   "connect.regenerateYes": "重新生成",
   "connect.cancel": "取消",
   "connect.fromEnv": "此令牌由服务器上的 HUB_TOKEN 设置。如需更换，请在那里修改。",
-  "connect.failed": "无法加载或更改令牌。"
+  "connect.failed": "无法加载或更改令牌。",
+  "empty.title": "没有已连接的播放器",
+  "empty.text": "在已启用 Hub 的设备上打开 Psysonic，它就会出现在这里，可直接控制。",
+  "empty.connect": "连接播放器",
+  "queue.empty": "队列为空",
+  "queue.emptyHint": "从音乐库中选择专辑、播放列表或歌曲开始播放。"
 }

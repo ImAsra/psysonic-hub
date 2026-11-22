@@ -92,5 +92,10 @@
   "connect.regenerateYes": "Új token létrehozása",
   "connect.cancel": "Mégse",
   "connect.fromEnv": "Ezt a tokent a szerveren a HUB_TOKEN adja meg. A cseréjéhez ott módosítsd.",
-  "connect.failed": "Nem sikerült betölteni vagy módosítani a tokent."
+  "connect.failed": "Nem sikerült betölteni vagy módosítani a tokent.",
+  "empty.title": "Nincs csatlakoztatott lejátszó",
+  "empty.text": "Nyisd meg a Psysonicot egy eszközön bekapcsolt hubbal, és itt megjelenik, vezérlésre készen.",
+  "empty.connect": "Lejátszó csatlakoztatása",
+  "queue.empty": "A sor üres",
+  "queue.emptyHint": "Válassz egy albumot, lejátszási listát vagy dalt a könyvtárból a kezdéshez."
 }

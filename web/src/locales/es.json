@@ -93,5 +93,10 @@
   "connect.regenerateYes": "Regenerar",
   "connect.cancel": "Cancelar",
   "connect.fromEnv": "Este token lo define HUB_TOKEN en el servidor. Para reemplazarlo, cambialo ahí.",
-  "connect.failed": "No se pudo cargar o cambiar el token."
+  "connect.failed": "No se pudo cargar o cambiar el token.",
+  "empty.title": "No hay reproductores conectados",
+  "empty.text": "Abrí Psysonic en un dispositivo con el hub activado y va a aparecer acá, listo para controlar.",
+  "empty.connect": "Conectar un reproductor",
+  "queue.empty": "No hay nada en la cola",
+  "queue.emptyHint": "Elegí un álbum, una lista o una canción de la biblioteca para empezar."
 }

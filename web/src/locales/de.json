@@ -93,5 +93,10 @@
   "connect.regenerateYes": "Neu erzeugen",
   "connect.cancel": "Abbrechen",
   "connect.fromEnv": "Dieser Token wird auf dem Server über HUB_TOKEN gesetzt. Zum Ersetzen dort ändern.",
-  "connect.failed": "Token konnte nicht geladen oder geändert werden."
+  "connect.failed": "Token konnte nicht geladen oder geändert werden.",
+  "empty.title": "Keine Player verbunden",
+  "empty.text": "Psysonic auf einem Gerät mit aktiviertem Hub öffnen, dann erscheint es hier und lässt sich steuern.",
+  "empty.connect": "Player verbinden",
+  "queue.empty": "Nichts in der Warteschlange",
+  "queue.emptyHint": "Album, Playlist oder Song aus der Bibliothek wählen, um zu starten."
 }

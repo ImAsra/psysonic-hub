@@ -34,6 +34,15 @@
     max-width: 440px;
   }
 
+  #emptyCard {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+    width: 100%;
+    max-width: 520px;
+    margin-top: 6vh;
+  }
+
   /* remote: player and devices on the left, the queue beside them, the library across the bottom */
   #main {
     grid-column: 1;

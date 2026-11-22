@@ -92,5 +92,10 @@
   "connect.regenerateYes": "Régénérer",
   "connect.cancel": "Annuler",
   "connect.fromEnv": "Ce jeton est défini par HUB_TOKEN sur le serveur. Pour le remplacer, modifiez-le là-bas.",
-  "connect.failed": "Impossible de charger ou de modifier le jeton."
+  "connect.failed": "Impossible de charger ou de modifier le jeton.",
+  "empty.title": "Aucun lecteur connecté",
+  "empty.text": "Ouvrez Psysonic sur un appareil avec le hub activé : il apparaîtra ici, prêt à être piloté.",
+  "empty.connect": "Connecter un lecteur",
+  "queue.empty": "File vide",
+  "queue.emptyHint": "Choisissez un album, une playlist ou un morceau dans la bibliothèque pour commencer."
 }

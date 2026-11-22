@@ -92,5 +92,10 @@
   "connect.regenerateYes": "Lag nytt",
   "connect.cancel": "Avbryt",
   "connect.fromEnv": "Dette tokenet settes av HUB_TOKEN på serveren. Endre det der for å bytte det ut.",
-  "connect.failed": "Kunne ikke laste eller endre tokenet."
+  "connect.failed": "Kunne ikke laste eller endre tokenet.",
+  "empty.title": "Ingen spillere tilkoblet",
+  "empty.text": "Åpne Psysonic på en enhet med huben slått på, så dukker den opp her, klar til å styres.",
+  "empty.connect": "Koble til en spiller",
+  "queue.empty": "Køen er tom",
+  "queue.emptyHint": "Velg et album, en spilleliste eller en sang fra biblioteket for å starte."
 }

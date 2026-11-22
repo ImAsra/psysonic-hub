@@ -1,3 +1,4 @@
+import { ListMusic } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -22,7 +23,19 @@ export function QueueCard() {
     if (list && current) list.scrollTop = Math.max(0, current.offsetTop - list.offsetTop - 8);
   }, [queue]);
 
-  if (!queue?.tracks.length) return null;
+  if (!queue?.tracks.length) {
+    return (
+      <section id="queueCard" className="card">
+        <h2>{t('queue.title')}</h2>
+        <div className="queue-empty">
+          <ListMusic aria-hidden="true" />
+          <div className="empty-title small">{t('queue.empty')}</div>
+          <p className="sub">{t('queue.emptyHint')}</p>
+        </div>
+      </section>
+    );
+  }
+
   const rest = queueRemainder(queue);
   return (
     <section id="queueCard" className="card">
