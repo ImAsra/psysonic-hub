@@ -21,6 +21,18 @@ assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/logo.svg`))
 assert.ok([200, 404].includes((await fetch(`http://127.0.0.1:${PORT}/icon.png`)).status));
 assert.equal((await fetch(`http://127.0.0.1:${PORT}/logo.svg/../server.js`)).status, 404);
 
+// installable web app: manifest with a maskable icon, a root-scoped service worker that never caches sign-in or the API
+const manifest = await (await fetch(`http://127.0.0.1:${PORT}/manifest.webmanifest`)).json();
+assert.equal(manifest.display, 'standalone');
+assert.equal(manifest.scope, '/');
+assert.ok(manifest.icons.some((i) => i.purpose === 'maskable'));
+const sw = await fetch(`http://127.0.0.1:${PORT}/sw.js`);
+assert.equal(sw.status, 200);
+assert.equal(sw.headers.get('content-type').split(';')[0], 'text/javascript');
+assert.equal(sw.headers.get('cache-control'), 'no-cache');
+const swText = await sw.text();
+assert.doesNotMatch(swText, /['"]\/(auth|api|ws)/);
+
 const url = `ws://127.0.0.1:${PORT}/ws`;
 
 const connect = (deviceId, name, kind, token = TOKEN) =>

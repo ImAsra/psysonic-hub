@@ -14,6 +14,33 @@ const store = {
 };
 
 const fallbackTranslations = {
+  'queue.title': 'Up next',
+  'queue.more': '{{count}} more in the queue',
+  'library.title': 'Library',
+  'library.search': 'Search songs, albums, artists',
+  'library.albums': 'Albums',
+  'library.artists': 'Artists',
+  'library.playlists': 'Playlists',
+  'library.songs': 'Songs',
+  'library.sort.newest': 'Newest',
+  'library.sort.recent': 'Recently played',
+  'library.sort.frequent': 'Most played',
+  'library.sort.random': 'Random',
+  'library.sort.name': 'A–Z',
+  'library.sort.starred': 'Favourites',
+  'library.back': '‹ Back',
+  'library.play': 'Play',
+  'library.playNext': 'Play next',
+  'library.addToQueue': 'Add to queue',
+  'library.more': 'Load more',
+  'library.loading': 'Loading…',
+  'library.empty': 'Nothing here yet.',
+  'library.noResults': 'No results.',
+  'library.noPlayer': 'Open Psysonic on a device to browse your library.',
+  'library.timeout': 'The player did not answer. Try again.',
+  'library.failed': 'Could not load this from the music server.',
+  'library.albumCount': '{{count}} albums',
+  'library.songCount': '{{count}} songs',
   'app.remote': 'Remote',
   'status.notConnected': 'Not connected',
   'status.connecting': 'Connecting…',
@@ -140,7 +167,9 @@ function applyTranslations() {
     // These elements are controlled by runtime state, not static translations.
     if (element.id === 'statusText' || element.id === 'title') return;
 
-    element.textContent = t(element.dataset.i18n);
+    // A count drawn from data keeps its number (data-i18n-count).
+    const count = element.dataset.i18nCount;
+    element.textContent = t(element.dataset.i18n, count === undefined ? {} : { count });
   });
 
   document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
@@ -187,6 +216,7 @@ function showLogin(msg) {
   $('main').classList.add('hidden');
   $('devicesCard').classList.add('hidden');
   $('syncCard').classList.add('hidden');
+  hideLibraryCards();
   $('login').classList.remove('hidden');
   $('logout').classList.add('hidden');
   $('loginMsg').textContent = msg || '';
@@ -285,9 +315,14 @@ function connect() {
         loadCover(coverTrack);
       }
     }
+
+    onLibraryMessage(m); // queue and library (library.js)
   };
 
   ws.onclose = (e) => {
+    // Lookups in flight are lost with the connection: the library reloads after the next welcome.
+    refreshLibraryCard();
+
     // The hub refuses this address for now: stop retrying.
     if (e.code === 4011 || e.code === 4010) {
       setStatus(
@@ -380,6 +415,8 @@ async function signOut() {
     ws.onclose = null;
     ws.close();
   }
+
+  refreshLibraryCard(); // the closed connection drops the library's pending lookups
 
   state = null;
   coverTrack = '';
@@ -611,6 +648,7 @@ async function start() {
       applyTranslations();
 
       if (ws?.readyState === 1) {
+        drawQueue();
         drawDevices();
         drawSync();
         draw();
@@ -621,4 +659,9 @@ async function start() {
   await init();
 }
 
-start();
+// Only once library.js (loaded after this file) has run too: start() can reach functions it defines.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+
+// Installed web app: keeps the page available while the hub is unreachable (needs https or localhost).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

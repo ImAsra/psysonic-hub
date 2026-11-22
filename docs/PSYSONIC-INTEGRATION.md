@@ -11,6 +11,8 @@ This lists everything the integration touches in the Psysonic repository (28 fil
 | `src/features/hub/hubClient.ts` | WebSocket client: connection, state reporting, remote commands, handoff, queue sync signal, cover upload |
 | `src/features/hub/hubStore.ts` | Persisted settings (address, token, device name) and runtime state |
 | `src/features/hub/hubSettingsSync.ts` | Opt-in settings categories synced through the hub |
+| `src/features/hub/hubQueue.ts` | Pure helpers: the queue window sent to remotes, and checking a remote's "play position N" |
+| `src/features/hub/hubLibrary.ts` | Answers remotes' library lookups and artwork requests from the active music server; tracks for "play album / playlist / song" |
 | `src/features/hub/hubServerKeys.ts` | Hashes of "music server + account" so handoffs only go to a compatible device |
 | `src/features/hub/compat.ts` | Pure helper: can playback move between two devices |
 | `src/features/hub/useHubRemote.ts`, `usePlayerView.ts` | "Another device is playing" view helpers for display |

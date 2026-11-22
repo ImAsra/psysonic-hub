@@ -4,6 +4,7 @@ A small, optional, self-hosted service for [Psysonic](https://github.com/Psychot
 
 - **Your server, your data.** The hub only relays small messages between your devices. It never plays audio and never talks to your music server; it holds no music-server credentials.
 - **Optional.** Psysonic only uses the hub if you enter its address in the settings. Without it, everything works as before.
+- **Web remote.** The hub's page shows what plays and what is next, and lets you browse and play your library through a connected player. Served over HTTPS it installs as an app on Android and iOS (Add to Home Screen).
 - **One container**, one port (5533), no database.
 
 ## Quick start

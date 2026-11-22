@@ -7,7 +7,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test.js && node test-auth-api.js && node test-hardening.js && node test-security.js"
+    "test": "node test.js && node test-library.js && node test-auth-api.js && node test-hardening.js && node test-security.js"
   },
   "engines": {
     "node": ">=20"

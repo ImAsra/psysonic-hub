@@ -52,6 +52,10 @@ Errors are JSON: `{"error": "<code>"}` with the usual status (400, 401, 403, 404
 
 `{ "devices": [ ... ] }` — the players (web remotes are not listed).
 
+### `GET /api/art?id=<coverArt>[&size=<px>]`
+
+Library artwork for a cover art id from a `browse-result`, as used by the web page. The hub has no music-server access, so a connected player fetches it; the hub keeps recent images in memory (48 MB). `size` is rounded up to 96, 160, 300 or 600. `404` when no player is connected or there is no artwork.
+
 ### `GET /api/cover[?track=<id>]`
 
 The current track's cover image (`image/jpeg`, `image/png` or `image/webp`) with an `ETag`, or `404` when there is none. With `track` it only answers if that is the current track. The playing device uploads it, so it can arrive a moment after the track starts.
