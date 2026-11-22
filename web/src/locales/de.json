@@ -98,5 +98,6 @@
   "empty.text": "Psysonic auf einem Gerät mit aktiviertem Hub öffnen, dann erscheint es hier und lässt sich steuern.",
   "empty.connect": "Player verbinden",
   "queue.empty": "Nichts in der Warteschlange",
-  "queue.emptyHint": "Album, Playlist oder Song aus der Bibliothek wählen, um zu starten."
+  "queue.emptyHint": "Album, Playlist oder Song aus der Bibliothek wählen, um zu starten.",
+  "library.index": "Zu Buchstabe springen"
 }

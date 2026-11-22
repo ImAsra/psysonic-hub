@@ -98,5 +98,6 @@
   "empty.text": "Abrí Psysonic en un dispositivo con el hub activado y va a aparecer acá, listo para controlar.",
   "empty.connect": "Conectar un reproductor",
   "queue.empty": "No hay nada en la cola",
-  "queue.emptyHint": "Elegí un álbum, una lista o una canción de la biblioteca para empezar."
+  "queue.emptyHint": "Elegí un álbum, una lista o una canción de la biblioteca para empezar.",
+  "library.index": "Ir a la letra"
 }

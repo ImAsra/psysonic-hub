@@ -97,5 +97,6 @@
   "empty.text": "Open Psysonic op een apparaat met de hub aan en het verschijnt hier, klaar om te bedienen.",
   "empty.connect": "Een speler verbinden",
   "queue.empty": "Niets in de wachtrij",
-  "queue.emptyHint": "Kies een album, playlist of nummer uit de bibliotheek om te beginnen."
+  "queue.emptyHint": "Kies een album, playlist of nummer uit de bibliotheek om te beginnen.",
+  "library.index": "Naar letter"
 }

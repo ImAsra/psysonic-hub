@@ -97,5 +97,6 @@
   "empty.text": "Nyisd meg a Psysonicot egy eszközön bekapcsolt hubbal, és itt megjelenik, vezérlésre készen.",
   "empty.connect": "Lejátszó csatlakoztatása",
   "queue.empty": "A sor üres",
-  "queue.emptyHint": "Válassz egy albumot, lejátszási listát vagy dalt a könyvtárból a kezdéshez."
+  "queue.emptyHint": "Válassz egy albumot, lejátszási listát vagy dalt a könyvtárból a kezdéshez.",
+  "library.index": "Ugrás betűre"
 }

@@ -254,3 +254,62 @@ input[type='search'] {
 .libview-playlists #albumSorts {
   display: none;
 }
+
+/* letter index: sections with a letter head, and an A–Z rail that stays in view on the right */
+.indexed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.letter-head {
+  margin: 22px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  scroll-margin-top: 12px;
+}
+.indexed-main > .letter-head:first-child {
+  margin-top: 14px;
+}
+.letter-rail {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 14px;
+  padding: 6px 2px;
+  border-radius: 99px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  touch-action: none;
+  user-select: none;
+}
+.letter-rail button {
+  min-width: 22px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 99px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+  color: var(--text-2);
+  background: transparent;
+  cursor: pointer;
+}
+.letter-rail button:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.letter-rail button.none {
+  opacity: 0.3;
+}
+.letter-rail button.on {
+  opacity: 1;
+  color: var(--on-accent);
+  background: var(--accent);
+}

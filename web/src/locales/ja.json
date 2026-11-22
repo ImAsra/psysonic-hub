@@ -97,5 +97,6 @@
   "empty.text": "ハブを有効にしたデバイスで Psysonic を開くと、ここに表示されて操作できるようになります。",
   "empty.connect": "プレーヤーを接続",
   "queue.empty": "キューは空です",
-  "queue.emptyHint": "ライブラリからアルバム、プレイリスト、曲を選んで始めましょう。"
+  "queue.emptyHint": "ライブラリからアルバム、プレイリスト、曲を選んで始めましょう。",
+  "library.index": "文字へ移動"
 }

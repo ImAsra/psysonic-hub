@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 
-import { ALBUM_SORTS, LIBRARY_TABS, STORAGE } from '../constants.ts';
+import { ALBUM_SORTS, LIBRARY_TABS, MAX_JUMP_PAGES, STORAGE } from '../constants.ts';
 import { hub } from '../hub/HubConnection.ts';
 import { errorMessage } from '../library/errorMessage.ts';
+import { indexedItems } from '../library/indexedItems.ts';
 import { isTabRequest } from '../library/isTabRequest.ts';
+import { letterRank } from '../library/letterRank.ts';
+import { letterSections } from '../library/letterSections.ts';
 import type { LibraryView } from '../library/libraryView.ts';
 import { mergePage } from '../library/mergePage.ts';
 import { pageCount } from '../library/pageCount.ts';
@@ -33,6 +36,8 @@ export interface LibraryState {
   showTab: (tab: LibraryTab) => Promise<void>;
   setSort: (sort: RemoteAlbumSort) => Promise<void>;
   loadMore: () => Promise<void>;
+  /** Loads further pages of an indexed list until a letter (or a later one) is in, or the list ends. */
+  loadThrough: (letter: string) => Promise<void>;
   open: (view: LibraryView, remember?: boolean) => Promise<void>;
   back: () => Promise<void>;
   search: (query: string) => Promise<void>;
@@ -116,6 +121,23 @@ export const useLibraryStore = create<LibraryState>()((set, get) => {
       const { tab, sort, offset, view } = get();
       if (view.kind !== 'tab') return;
       await load(tabRequest(tab, sort, offset), true);
+    },
+    async loadThrough(letter) {
+      const { tab, sort } = get();
+      const target = letterRank(letter);
+
+      for (let i = 0; i < MAX_JUMP_PAGES; i++) {
+        const s = get();
+        const items = indexedItems(s);
+        if (!items || !s.more || s.tab !== tab || s.sort !== sort) return;
+
+        const loaded = letterSections(items, (item) => item.name).map((section) => section.letter);
+        if (loaded.includes(letter) || letterRank(loaded.at(-1) ?? '#') > target) return;
+
+        const before = s.offset;
+        await get().loadMore();
+        if (get().offset === before) return; // the page didn't come (an error, or the user moved on)
+      }
     },
     async open(view, remember = true) {
       const { view: current, stack } = get();

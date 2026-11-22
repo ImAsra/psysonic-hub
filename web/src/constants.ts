@@ -40,6 +40,11 @@ export const BROWSE_TIMEOUT_MS = 20_000;
 export const COVER_RETRIES = 4;
 export const COVER_RETRY_MS = 1200;
 
+/** The section under this line (px from the top of the window) is the one the letter index highlights. */
+export const ACTIVE_LETTER_LINE = 120;
+/** A jump to a letter loads at most this many further pages to reach it. */
+export const MAX_JUMP_PAGES = 100;
+
 export const ART_THUMB = 96;
 export const ART_TILE = 300;
 

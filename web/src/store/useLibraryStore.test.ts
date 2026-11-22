@@ -83,6 +83,66 @@ describe('library browsing', () => {
   });
 });
 
+describe('jumping to a letter', () => {
+  const artists = (...names: string[]) => names.map((name) => ({ id: name, name }));
+
+  beforeEach(() => {
+    browse.mockReset();
+    useHubStore.setState({ devices: [{ id: 'desk', name: 'Desk', kind: 'desktop', active: true, server: [] }] });
+    useLibraryStore.setState({ view: { kind: 'tab' }, stack: [], result: null, offset: 0, more: false, message: '' });
+  });
+
+  it('loads further pages until the letter is in', async () => {
+    browse.mockResolvedValueOnce({ result: { artists: artists('ABBA', 'Air'), more: true } });
+    await useLibraryStore.getState().showTab('artists');
+    browse.mockResolvedValueOnce({ result: { artists: artists('Beck', 'Blur'), more: true } });
+    browse.mockResolvedValueOnce({ result: { artists: artists('Cake', 'Coil'), more: true } });
+
+    await useLibraryStore.getState().loadThrough('C');
+
+    expect(browse).toHaveBeenCalledTimes(3);
+    expect(useLibraryStore.getState().result?.artists).toHaveLength(6);
+  });
+
+  it('stops at a later letter when the list has nothing under the one asked for', async () => {
+    browse.mockResolvedValueOnce({ result: { artists: artists('ABBA'), more: true } });
+    await useLibraryStore.getState().showTab('artists');
+    browse.mockResolvedValueOnce({ result: { artists: artists('Devo'), more: true } });
+
+    await useLibraryStore.getState().loadThrough('C');
+
+    expect(browse).toHaveBeenCalledTimes(2);
+  });
+
+  it('loads nothing when the letter is already in, and stops at the end of the list', async () => {
+    browse.mockResolvedValueOnce({ result: { artists: artists('ABBA'), more: true } });
+    await useLibraryStore.getState().showTab('artists');
+    await useLibraryStore.getState().loadThrough('A');
+    expect(browse).toHaveBeenCalledTimes(1);
+
+    browse.mockResolvedValueOnce({ result: { artists: artists('Beck'), more: false } });
+    await useLibraryStore.getState().loadThrough('Z');
+    expect(browse).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops when a page fails instead of asking again and again', async () => {
+    browse.mockResolvedValueOnce({ result: { artists: artists('ABBA'), more: true } });
+    await useLibraryStore.getState().showTab('artists');
+    browse.mockResolvedValue({ error: 'timeout' });
+
+    await useLibraryStore.getState().loadThrough('Z');
+
+    expect(browse).toHaveBeenCalledTimes(2);
+  });
+
+  it('only works on albums sorted by name', async () => {
+    browse.mockResolvedValueOnce({ result: { albums: albums(0, 40), more: true } });
+    await useLibraryStore.getState().setSort('newest');
+    await useLibraryStore.getState().loadThrough('M');
+    expect(browse).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('the library player going away', () => {
   beforeEach(() => {
     browse.mockReset();

@@ -97,5 +97,6 @@
   "empty.text": "Open Psysonic on a device with the hub enabled and it shows up here, ready to control.",
   "empty.connect": "Connect a player",
   "queue.empty": "Nothing queued",
-  "queue.emptyHint": "Pick an album, playlist or song from the library to start."
+  "queue.emptyHint": "Pick an album, playlist or song from the library to start.",
+  "library.index": "Jump to letter"
 }

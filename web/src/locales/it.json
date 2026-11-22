@@ -97,5 +97,6 @@
   "empty.text": "Apri Psysonic su un dispositivo con l'hub attivo e comparirà qui, pronto da controllare.",
   "empty.connect": "Collega un lettore",
   "queue.empty": "Coda vuota",
-  "queue.emptyHint": "Scegli un album, una playlist o un brano dalla libreria per iniziare."
+  "queue.emptyHint": "Scegli un album, una playlist o un brano dalla libreria per iniziare.",
+  "library.index": "Vai alla lettera"
 }

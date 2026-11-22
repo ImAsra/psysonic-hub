@@ -97,5 +97,6 @@
   "empty.text": "在已启用 Hub 的设备上打开 Psysonic，它就会出现在这里，可直接控制。",
   "empty.connect": "连接播放器",
   "queue.empty": "队列为空",
-  "queue.emptyHint": "从音乐库中选择专辑、播放列表或歌曲开始播放。"
+  "queue.emptyHint": "从音乐库中选择专辑、播放列表或歌曲开始播放。",
+  "library.index": "跳转到字母"
 }

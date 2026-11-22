@@ -97,5 +97,6 @@
   "empty.text": "Otwórz Psysonic na urządzeniu z włączonym hubem, a pojawi się tutaj, gotowy do sterowania.",
   "empty.connect": "Połącz odtwarzacz",
   "queue.empty": "Kolejka jest pusta",
-  "queue.emptyHint": "Wybierz album, playlistę lub utwór z biblioteki, aby zacząć."
+  "queue.emptyHint": "Wybierz album, playlistę lub utwór z biblioteki, aby zacząć.",
+  "library.index": "Przejdź do litery"
 }

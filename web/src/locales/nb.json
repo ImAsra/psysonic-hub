@@ -97,5 +97,6 @@
   "empty.text": "Åpne Psysonic på en enhet med huben slått på, så dukker den opp her, klar til å styres.",
   "empty.connect": "Koble til en spiller",
   "queue.empty": "Køen er tom",
-  "queue.emptyHint": "Velg et album, en spilleliste eller en sang fra biblioteket for å starte."
+  "queue.emptyHint": "Velg et album, en spilleliste eller en sang fra biblioteket for å starte.",
+  "library.index": "Gå til bokstav"
 }

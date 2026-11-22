@@ -97,5 +97,6 @@
   "empty.text": "Deschide Psysonic pe un dispozitiv cu hubul activat și va apărea aici, gata de control.",
   "empty.connect": "Conectează un player",
   "queue.empty": "Coada este goală",
-  "queue.emptyHint": "Alege un album, un playlist sau o piesă din bibliotecă pentru a începe."
+  "queue.emptyHint": "Alege un album, un playlist sau o piesă din bibliotecă pentru a începe.",
+  "library.index": "Salt la literă"
 }
