@@ -10,9 +10,11 @@ Send `Authorization: Bearer <token>`.
 |---|---|
 | `API_TOKEN` | everything, including control (`POST`) |
 | `API_TOKEN_READONLY` | `GET` endpoints only |
-| `HUB_TOKEN` | `GET` endpoints only |
+| device token (`HUB_TOKEN` or the generated one) | `GET` endpoints only |
 
 `GET` endpoints also accept `?key=<API_TOKEN_READONLY>` for clients that cannot send headers. The full-control token is never accepted in a URL. Requests are limited to 600 per minute per client address.
+
+The device token itself is read and regenerated at `/settings/token` (`GET`, and `POST` to regenerate), for the web page's Settings. It accepts the web login session or the device token, never the API tokens; regenerating disconnects every device signed in with the old token, and answers `409 token_from_env` when `HUB_TOKEN` sets it.
 
 Errors are JSON: `{"error": "<code>"}` with the usual status (400, 401, 403, 404, 409, 413, 429).
 

@@ -1,0 +1,315 @@
+/* queue and library */
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 8px -8px 0;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-hover) transparent;
+}
+.rows.flat {
+  max-height: none;
+  overflow: visible;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+.row:hover {
+  background: var(--bg-hover);
+}
+.row.current {
+  color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 700;
+}
+.row.played {
+  opacity: 0.55;
+}
+.row .num {
+  flex: none;
+  width: 28px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.row .thumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--bg-deep);
+}
+.row .txt {
+  flex: 1;
+  min-width: 0;
+}
+.row .l1,
+.row .l2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row .l2 {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+.row .dur {
+  flex: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.row .add {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 20px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.row .add:hover {
+  color: var(--text);
+  background: var(--bg-card);
+}
+
+.search input {
+  width: 100%;
+  margin-top: 8px;
+}
+input[type='search'] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar {
+  display: none;
+}
+.chips.small .chip-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+.chip-btn {
+  flex: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 99px;
+  cursor: pointer;
+  color: var(--text-2);
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+}
+.chip-btn.on {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+.tile {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+.tile .sq {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--bg-deep);
+}
+.tile .l1 {
+  margin-top: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile .l2 {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile:hover .sq {
+  filter: brightness(1.1);
+}
+.tile.round {
+  text-align: center;
+}
+.sq-wrap {
+  position: relative;
+}
+.tile.round .sq-wrap {
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--bg-deep);
+}
+/* zoomed in a little: many artist pictures have a thin light border that would ring the circle */
+.tile.round .sq {
+  position: relative;
+  border-radius: 50%;
+  background: transparent;
+  transform: scale(1.08);
+}
+/* an artist without a picture shows its initial (the picture covers it once loaded) */
+.tile .initial {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 750;
+  color: var(--muted);
+  user-select: none;
+}
+.lib-section {
+  margin: 18px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lib-head {
+  margin-top: 12px;
+}
+.lib-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+.lib-art {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--bg-deep);
+}
+.lib-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.lib-actions .btn {
+  padding: 10px 14px;
+}
+.btn.ghost {
+  color: var(--text);
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+}
+.libview-search #libTabs,
+.libview-search #albumSorts,
+.libview-detail #libTabs,
+.libview-detail #albumSorts,
+.libview-artists #albumSorts,
+.libview-playlists #albumSorts {
+  display: none;
+}
+
+/* letter index: sections with a letter head, and an A–Z rail that stays in view on the right */
+.indexed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.letter-head {
+  margin: 22px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  scroll-margin-top: 12px;
+}
+.indexed-main > .letter-head:first-child {
+  margin-top: 14px;
+}
+.letter-rail {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 14px;
+  padding: 6px 2px;
+  border-radius: 99px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  touch-action: none;
+  user-select: none;
+}
+.letter-rail button {
+  min-width: 22px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 99px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+  color: var(--text-2);
+  background: transparent;
+  cursor: pointer;
+}
+.letter-rail button:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.letter-rail button.none {
+  opacity: 0.3;
+}
+.letter-rail button.on {
+  opacity: 1;
+  color: var(--on-accent);
+  background: var(--accent);
+}

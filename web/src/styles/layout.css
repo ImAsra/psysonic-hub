@@ -1,0 +1,103 @@
+/* desktop: use the whole page (two columns per page, see below).
+   Below 900px the single-column mobile layout above is used unchanged. */
+@media (min-width: 900px) {
+  body {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  main {
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto auto; /* row 3 absorbs the height difference between the columns */
+    column-gap: 20px;
+    align-items: start;
+  }
+  header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    flex-wrap: nowrap;
+  }
+  .brand {
+    flex: 1;
+  }
+  footer {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+
+  #login {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  #emptyCard {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+    width: 100%;
+    max-width: 520px;
+    margin-top: 6vh;
+  }
+
+  /* remote: player and devices on the left, the queue beside them, the library across the bottom */
+  #main {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 28px;
+  }
+  #devicesCard {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  #queueCard {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    /* the left column decides the height; a long queue scrolls inside the card instead of stretching the page */
+    contain: size;
+    min-height: 320px;
+  }
+  #queueCard .rows {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+  #libraryCard {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    min-width: 0;
+  }
+
+  /* settings: connecting a player on the left, settings sync on the right */
+  #connectCard {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  #syncCard {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
+
+  .art {
+    width: 120px;
+    height: 120px;
+    border-radius: 18px;
+  }
+  .art svg {
+    width: 48px;
+    height: 48px;
+  }
+  .title {
+    font-size: 24px;
+  }
+  .transport {
+    gap: 26px;
+    margin-top: 22px;
+  }
+}

@@ -1,0 +1,64 @@
+/* devices — each connected player is a tile in a responsive grid */
+/* auto-fit: 1 player = one wide tile, 2+ = two columns (one column on phones); a lone last tile spans the row.
+   The list has a max height and scrolls inside the card instead of growing the page. */
+#devices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-hover) transparent;
+  padding: 4px;
+  margin: 8px -4px 0; /* room so focus rings aren't clipped by the scroll box */
+}
+#devices > .dev:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.dev {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 84px;
+  padding: 16px;
+  margin: 0;
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--bg-sidebar);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.dev:hover {
+  background: var(--bg-hover);
+}
+.dev.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.dev svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+}
+.dev .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dev .chip {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

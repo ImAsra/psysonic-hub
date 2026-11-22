@@ -1,0 +1,44 @@
+/* Psysonic's default theme tokens (Catppuccin Mocha; light mode uses Latte). Same names as in Psysonic. */
+:root {
+  color-scheme: dark light;
+  --bg-app: #1e1e2e;
+  --bg-sidebar: #181825;
+  --bg-card: #313244;
+  --bg-hover: #45475a;
+  --bg-deep: #11111b;
+  --accent: #cba6f7;
+  --accent-2: #89b4fa;
+  --accent-dim: rgba(203, 166, 247, 0.15);
+  --accent-glow: rgba(203, 166, 247, 0.3);
+  --text: #cdd6f4;
+  --text-2: #bac2de;
+  --muted: #a6adc8;
+  --border: #45475a;
+  --border-subtle: #313244;
+  --on-accent: #11111b;
+  --danger: #f38ba8;
+  --ok: #a6e3a1;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-app: #eff1f5;
+    --bg-sidebar: #e6e9ef;
+    --bg-card: #ffffff;
+    --bg-hover: #ccd0da;
+    --bg-deep: #dce0e8;
+    --accent: #8839ef;
+    --accent-2: #1e66f5;
+    --accent-dim: rgba(136, 57, 239, 0.12);
+    --accent-glow: rgba(136, 57, 239, 0.25);
+    --text: #4c4f69;
+    --text-2: #5c5f77;
+    --muted: #6c6f85;
+    --border: #bcc0cc;
+    --border-subtle: #ccd0da;
+    --on-accent: #ffffff;
+    --danger: #d20f39;
+    --ok: #40a02b;
+  }
+}
