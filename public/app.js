@@ -167,7 +167,9 @@ function applyTranslations() {
     // These elements are controlled by runtime state, not static translations.
     if (element.id === 'statusText' || element.id === 'title') return;
 
-    element.textContent = t(element.dataset.i18n);
+    // A count drawn from data keeps its number (data-i18n-count).
+    const count = element.dataset.i18nCount;
+    element.textContent = t(element.dataset.i18n, count === undefined ? {} : { count });
   });
 
   document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {

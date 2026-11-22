@@ -98,6 +98,21 @@ async function loadArt(img) {
 // ---------------------------------------------------------------------------
 // shared row / tile builders (text only through textContent)
 // ---------------------------------------------------------------------------
+// Text in the page's language, marked so a language change redraws it (applyTranslations in app.js).
+function translate(el, key, count) {
+  el.dataset.i18n = key;
+  if (count === undefined) delete el.dataset.i18nCount;
+  else el.dataset.i18nCount = count;
+  el.textContent = t(key, count === undefined ? {} : { count });
+}
+
+function untranslated(el, text) {
+  delete el.dataset.i18n;
+  delete el.dataset.i18nCount;
+  el.textContent = text;
+}
+
+// l2: plain text, or { key, count } for a translated count.
 function row({ num, l1, l2, dur, coverArt, round, cls, onClick, onAdd }) {
   const b = document.createElement('div');
   b.className = 'row' + (cls ? ' ' + cls : '');
@@ -124,7 +139,8 @@ function row({ num, l1, l2, dur, coverArt, round, cls, onClick, onAdd }) {
   if (l2) {
     const s = document.createElement('div');
     s.className = 'l2';
-    s.textContent = l2;
+    if (typeof l2 === 'object') translate(s, l2.key, l2.count);
+    else s.textContent = l2;
     txt.appendChild(s);
   }
   b.appendChild(txt);
@@ -139,6 +155,7 @@ function row({ num, l1, l2, dur, coverArt, round, cls, onClick, onAdd }) {
     add.type = 'button';
     add.className = 'add';
     add.textContent = '+';
+    add.dataset.i18nAriaLabel = 'library.addToQueue';
     add.setAttribute('aria-label', t('library.addToQueue'));
     add.onclick = (e) => { e.stopPropagation(); onAdd(); };
     b.appendChild(add);
@@ -169,10 +186,10 @@ function tile({ l1, l2, coverArt, onClick }) {
   return b;
 }
 
-const section = (label) => {
+const section = (key) => {
   const h = document.createElement('div');
   h.className = 'lib-section';
-  h.textContent = label;
+  translate(h, key);
   return h;
 };
 
@@ -260,8 +277,9 @@ function markChips() {
   for (const b of $('albumSorts').children) b.classList.toggle('on', b.dataset.sort === albumSort);
 }
 
-function setMsg(key, extra) {
-  $('libMsg').textContent = key ? t(key, extra) : '';
+function setMsg(key) {
+  if (key) translate($('libMsg'), key);
+  else untranslated($('libMsg'), '');
 }
 
 function errorKey(r) {
@@ -346,7 +364,7 @@ function appendArtistRows(body, artists, append) {
   }
   for (const a of artists) {
     rows.appendChild(row({
-      l1: a.name, l2: a.albumCount ? t('library.albumCount', { count: a.albumCount }) : '', coverArt: a.coverArt, round: true,
+      l1: a.name, l2: a.albumCount ? { key: 'library.albumCount', count: a.albumCount } : '', coverArt: a.coverArt, round: true,
       onClick: () => openDetail({ kind: 'artist', id: a.id }),
     }));
   }
@@ -357,7 +375,7 @@ function appendPlaylistRows(body, playlists) {
   rows.className = 'rows flat';
   for (const p of playlists) {
     rows.appendChild(row({
-      l1: p.name, l2: p.songCount ? t('library.songCount', { count: p.songCount }) : '', coverArt: p.coverArt,
+      l1: p.name, l2: p.songCount ? { key: 'library.songCount', count: p.songCount } : '', coverArt: p.coverArt,
       onClick: () => openDetail({ kind: 'playlist', id: p.id }),
     }));
   }
@@ -390,7 +408,7 @@ async function openDetail(req, fromBack = false) {
   $('libMore').classList.add('hidden');
   $('libActions').classList.toggle('hidden', req.kind === 'artist');
   $('libTitle').textContent = '';
-  $('libSub').textContent = '';
+  untranslated($('libSub'), '');
   $('libArt').classList.add('hidden');
   $('libBody').replaceChildren();
   setMsg('library.loading');
@@ -401,9 +419,8 @@ async function openDetail(req, fromBack = false) {
   const res = r.result || {};
   const it = res.item || {};
   $('libTitle').textContent = it.name || it.title || '';
-  $('libSub').textContent = req.kind === 'album'
-    ? [it.artist, it.year].filter(Boolean).join(' · ')
-    : req.kind === 'playlist' && it.songCount ? t('library.songCount', { count: it.songCount }) : '';
+  if (req.kind === 'playlist' && it.songCount) translate($('libSub'), 'library.songCount', it.songCount);
+  else untranslated($('libSub'), req.kind === 'album' ? [it.artist, it.year].filter(Boolean).join(' · ') : '');
   if (it.coverArt) {
     $('libArt').classList.remove('hidden');
     art($('libArt'), it.coverArt, 300);
@@ -430,15 +447,15 @@ async function runSearch(query) {
   const none = !res.artists?.length && !res.albums?.length && !res.songs?.length;
   setMsg(none ? 'library.noResults' : '');
   if (res.songs?.length) {
-    body.appendChild(section(t('library.songs')));
+    body.appendChild(section('library.songs'));
     body.appendChild(songRows(res.songs, (s) => playItem('song', s.id, 'play'), true));
   }
   if (res.albums?.length) {
-    body.appendChild(section(t('library.albums')));
+    body.appendChild(section('library.albums'));
     appendAlbumGrid(body, res.albums, false);
   }
   if (res.artists?.length) {
-    body.appendChild(section(t('library.artists')));
+    body.appendChild(section('library.artists'));
     appendArtistRows(body, res.artists, false);
   }
 }
