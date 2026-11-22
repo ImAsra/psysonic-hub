@@ -13,7 +13,6 @@ interface Props {
   /** Shows a thumbnail (an empty one when there is no artwork). */
   thumb?: boolean;
   coverArt?: string;
-  round?: boolean;
   className?: string;
   onClick: () => void;
   /** Shows a "+" button (add to queue). */
@@ -22,7 +21,7 @@ interface Props {
 }
 
 /** A list row: optional number or thumbnail, two lines of text, duration, and an add button. */
-export function Row({ l1, l2, num, durationSec, thumb, coverArt, round, className, onClick, onAdd, ref }: Props) {
+export function Row({ l1, l2, num, durationSec, thumb, coverArt, className, onClick, onAdd, ref }: Props) {
   const { t } = useTranslation();
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -42,7 +41,7 @@ export function Row({ l1, l2, num, durationSec, thumb, coverArt, round, classNam
       onKeyDown={onKeyDown}
     >
       {num !== undefined && <span className="num">{num}</span>}
-      {thumb && <ArtImage className={round ? 'thumb round' : 'thumb'} coverArt={coverArt} size={ART_THUMB} />}
+      {thumb && <ArtImage className="thumb" coverArt={coverArt} size={ART_THUMB} />}
       <span className="txt">
         <div className="l1">{l1 || '—'}</div>
         {l2 && <div className="l2">{l2}</div>}

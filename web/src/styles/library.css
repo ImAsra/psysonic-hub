@@ -54,9 +54,6 @@
   object-fit: cover;
   background: var(--bg-deep);
 }
-.row .thumb.round {
-  border-radius: 50%;
-}
 .row .txt {
   flex: 1;
   min-width: 0;
@@ -179,6 +176,35 @@ input[type='search'] {
 }
 .tile:hover .sq {
   filter: brightness(1.1);
+}
+.tile.round {
+  text-align: center;
+}
+.sq-wrap {
+  position: relative;
+}
+.tile.round .sq-wrap {
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--bg-deep);
+}
+/* zoomed in a little: many artist pictures have a thin light border that would ring the circle */
+.tile.round .sq {
+  position: relative;
+  border-radius: 50%;
+  background: transparent;
+  transform: scale(1.08);
+}
+/* an artist without a picture shows its initial (the picture covers it once loaded) */
+.tile .initial {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 750;
+  color: var(--muted);
+  user-select: none;
 }
 .lib-section {
   margin: 18px 0 0;

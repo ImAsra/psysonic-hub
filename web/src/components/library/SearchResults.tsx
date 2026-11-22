@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { playItem } from '../../store/useLibraryStore.ts';
 import type { BrowseResult } from '../../types.ts';
 import { AlbumGrid } from './AlbumGrid.tsx';
-import { ArtistRows } from './ArtistRows.tsx';
+import { ArtistGrid } from './ArtistGrid.tsx';
 import { SongRows } from './SongRows.tsx';
 
 export function SearchResults({ result }: { result: BrowseResult }) {
@@ -26,7 +26,7 @@ export function SearchResults({ result }: { result: BrowseResult }) {
       {!!result.artists?.length && (
         <>
           <div className="lib-section">{t('library.artists')}</div>
-          <ArtistRows artists={result.artists} />
+          <ArtistGrid artists={result.artists} />
         </>
       )}
     </>
