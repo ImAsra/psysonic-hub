@@ -1,4 +1,3 @@
-import i18n from '../i18n.ts';
 import { initialHubState, useHubStore } from '../store/useHubStore.ts';
 import { hub } from './HubConnection.ts';
 
@@ -14,7 +13,7 @@ export async function signOut(): Promise<void> {
     if (!r.ok) throw new Error('Logout failed');
   } catch (error) {
     console.error('Sign out failed:', error);
-    useHubStore.setState({ login: { ...useHubStore.getState().login, message: i18n.t('login.signOutFailed') } });
+    useHubStore.setState({ login: { ...useHubStore.getState().login, message: { key: 'login.signOutFailed' } } });
     return;
   }
 
@@ -24,6 +23,6 @@ export async function signOut(): Promise<void> {
   useHubStore.setState({
     ...initialHubState,
     mode,
-    login: { visible: true, message: i18n.t('login.signedOut') },
+    login: { visible: true, message: { key: 'login.signedOut' } },
   });
 }

@@ -4,6 +4,7 @@ import type {
   AuthMode,
   ConnectionStatus,
   Device,
+  Notice,
   Page,
   QueueWindow,
   RelayedState,
@@ -16,7 +17,7 @@ export interface HubState {
   mode: AuthMode | null;
   status: ConnectionStatus;
   /** The login card is shown (with an optional message) instead of the player. */
-  login: { visible: boolean; message: string };
+  login: { visible: boolean; message: Notice | null };
   /** Players only (web remotes are not listed). */
   devices: Device[];
   state: RelayedState | null;
@@ -34,7 +35,7 @@ export interface HubState {
 export const initialHubState: HubState = {
   mode: null,
   status: 'notConnected',
-  login: { visible: false, message: '' },
+  login: { visible: false, message: null },
   devices: [],
   state: null,
   stateAt: 0,

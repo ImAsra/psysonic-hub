@@ -1,5 +1,4 @@
 import { RECONNECT_MAX_MS, STORAGE } from '../constants.ts';
-import i18n from '../i18n.ts';
 import { useHubStore } from '../store/useHubStore.ts';
 import type { AuthMode } from '../types.ts';
 import { storage } from '../utils/storage.ts';
@@ -28,21 +27,21 @@ export async function startSession(attempt = 0): Promise<void> {
     useHubStore.setState({
       mode: null,
       status: 'reconnecting',
-      login: { visible: true, message: i18n.t('login.unreachable') },
+      login: { visible: true, message: { key: 'login.unreachable' } },
     });
 
     setTimeout(() => void startSession(attempt + 1), Math.min(1000 * 2 ** attempt, RECONNECT_MAX_MS));
     return;
   }
 
-  useHubStore.setState({ mode, login: { visible: false, message: '' } });
+  useHubStore.setState({ mode, login: { visible: false, message: null } });
 
   if (mode === 'password') {
     const me = await fetch('/auth/me', { credentials: 'same-origin' }).catch(() => null);
     if (me?.ok) return hub.connect();
-    return hub.showLogin('');
+    return hub.showLogin(null);
   }
 
   if (storage.get(STORAGE.token)) return hub.connect();
-  hub.showLogin('');
+  hub.showLogin(null);
 }

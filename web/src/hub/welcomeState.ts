@@ -6,7 +6,7 @@ export function welcomeState(m: WelcomeMessage, now = Date.now()): Partial<HubSt
   return {
     status: 'connected',
     welcomed: true,
-    login: { visible: false, message: '' },
+    login: { visible: false, message: null },
     catalog: m.syncCatalog ?? [],
     syncConfig: m.syncConfig ?? {},
     devices: m.devices.filter((d) => d.kind !== 'web'),

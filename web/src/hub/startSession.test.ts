@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Notice } from '../types.ts';
+
 const connect = vi.fn();
 
 vi.mock('./HubConnection.ts', () => ({
   hub: {
     connect: () => connect(),
-    showLogin: (message: string) => useHubStore.setState({ login: { visible: true, message } }),
+    showLogin: (message: Notice | null) => useHubStore.setState({ login: { visible: true, message } }),
   },
 }));
 
@@ -34,7 +36,7 @@ describe('startSession', () => {
     const s = useHubStore.getState();
     expect(s.mode).toBeNull();
     expect(s.status).toBe('reconnecting');
-    expect(s.login.message).toBe('Could not reach the hub.');
+    expect(s.login.message).toEqual({ key: 'login.unreachable' });
 
     fetchMock.mockImplementation((url: string) =>
       reply(url === '/auth/config' ? { mode: 'password' } : {}, url !== '/auth/me'),
@@ -42,7 +44,7 @@ describe('startSession', () => {
 
     await vi.advanceTimersByTimeAsync(1000);
     expect(useHubStore.getState().mode).toBe('password');
-    expect(useHubStore.getState().login).toEqual({ visible: true, message: '' });
+    expect(useHubStore.getState().login).toEqual({ visible: true, message: null });
   });
 
   it('a signed-in session connects straight away', async () => {

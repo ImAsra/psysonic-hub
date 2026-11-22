@@ -1,8 +1,7 @@
 import { PROTOCOL } from '../../../shared/protocol.ts';
 import { BROWSE_TIMEOUT_MS, RECONNECT_MAX_MS, STORAGE } from '../constants.ts';
-import i18n from '../i18n.ts';
 import { useHubStore } from '../store/useHubStore.ts';
-import type { BrowseRequest, BrowseResult, HubMessage } from '../types.ts';
+import type { BrowseRequest, BrowseResult, HubMessage, Notice } from '../types.ts';
 import { storage } from '../utils/storage.ts';
 import { playersUpdate } from './playersUpdate.ts';
 import { welcomeState } from './welcomeState.ts';
@@ -12,7 +11,6 @@ export interface BrowseAnswer {
   error?: string;
 }
 
-const t = (key: string) => i18n.t(key);
 const set = useHubStore.setState;
 
 /**
@@ -40,7 +38,7 @@ export class HubConnection {
   connect(token?: string): void {
     const { mode } = useHubStore.getState();
     const tok = mode === 'token' ? token || storage.get(STORAGE.token) : null;
-    if (mode === 'token' && !tok) return this.showLogin('');
+    if (mode === 'token' && !tok) return this.showLogin(null);
     if (tok) storage.set(STORAGE.token, tok);
     clearTimeout(this.retryTimer);
     this.detach();
@@ -72,7 +70,7 @@ export class HubConnection {
     this.detach();
   }
 
-  showLogin(message: string): void {
+  showLogin(message: Notice | null): void {
     set({ login: { visible: true, message } });
   }
 
@@ -154,13 +152,13 @@ export class HubConnection {
     // The hub refuses this address for now: stop retrying.
     if (code === 4011 || code === 4010) {
       set({ status: code === 4011 ? 'lockedOut' : 'tooManyConnections' });
-      return this.showLogin(t(code === 4011 ? 'login.lockedOut' : 'login.tooManyConnections'));
+      return this.showLogin({ key: code === 4011 ? 'login.lockedOut' : 'login.tooManyConnections' });
     }
 
     if (code === 4005) {
       const password = useHubStore.getState().mode === 'password';
       set({ status: password ? 'signedOut' : 'wrongToken' });
-      return this.showLogin(t(password ? 'login.sessionEnded' : 'login.wrongToken'));
+      return this.showLogin({ key: password ? 'login.sessionEnded' : 'login.wrongToken' });
     }
 
     set({ status: 'reconnecting' });

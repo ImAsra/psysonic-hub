@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { STORAGE } from '../../constants.ts';
 import { signIn } from '../../hub/signIn.ts';
 import { useHubStore } from '../../store/useHubStore.ts';
+import type { Notice } from '../../types.ts';
 import { storage } from '../../utils/storage.ts';
 
 export function LoginCard() {
@@ -14,12 +15,14 @@ export function LoginCard() {
   const [password, setPassword] = useState('');
   const [token, setToken] = useState(() => storage.get(STORAGE.token) ?? '');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Notice | null>(null);
+
+  const shown = error ?? message;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    setError('');
+    setError(null);
     const msg = await signIn(user, password, token);
     setBusy(false);
     setError(msg);
@@ -71,7 +74,7 @@ export function LoginCard() {
           </div>
         )}
         <div className="msg" role="alert">
-          {error || message}
+          {shown && t(shown.key, shown.values)}
         </div>
         {mode && (
           <button className="btn block" type="submit" disabled={busy}>
