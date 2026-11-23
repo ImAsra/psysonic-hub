@@ -69,6 +69,26 @@ describe('library browsing', () => {
     expect(useLibraryStore.getState().view).toEqual({ kind: 'tab' });
   });
 
+  it('clearing the search box after a search goes back to the tab', async () => {
+    browse.mockResolvedValue({ result: { songs: [{ id: 's1' }], albums: [], artists: [] } });
+    await useLibraryStore.getState().search('beat');
+    browse.mockResolvedValue({ result: { albums: albums(0, 3) } });
+    await useLibraryStore.getState().setQuery('');
+
+    const s = useLibraryStore.getState();
+    expect(s.view).toEqual({ kind: 'tab' });
+    expect(s.result?.albums).toHaveLength(3);
+  });
+
+  it('typing in the search box does not search before Enter', async () => {
+    browse.mockResolvedValue({ result: { albums: albums(0, 1) } });
+    await useLibraryStore.getState().showTab('albums');
+    const calls = browse.mock.calls.length;
+    await useLibraryStore.getState().setQuery('be');
+    expect(browse.mock.calls.length).toBe(calls);
+    expect(useLibraryStore.getState().view).toEqual({ kind: 'tab' });
+  });
+
   it('a failed lookup shows why', async () => {
     browse.mockResolvedValue({ error: 'timeout' });
     await useLibraryStore.getState().showTab('playlists');
