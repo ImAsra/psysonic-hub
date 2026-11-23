@@ -49,6 +49,7 @@
   "devices.playingOn": "Speelt af op {{name}}",
   "queue.title": "Hierna",
   "queue.more": "Nog {{count}} in de wachtrij",
+  "queue.move": "Sleep om te herschikken",
   "library.title": "Bibliotheek",
   "library.search": "Zoek nummers, albums, artiesten",
   "library.albums": "Albums",

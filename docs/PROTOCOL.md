@@ -45,6 +45,7 @@ Queue and library commands (players that support them; others ignore them):
 | Action | Args | Meaning |
 |---|---|---|
 | `playIndex` | `{ index, trackId }` | Play that absolute queue position. Ignored when the track there is no longer `trackId`. |
+| `moveQueue` | `{ from, to, trackId }` | Move the track at absolute position `from` so it ends up at `to` (taken out, then put back), keeping the current track playing. Ignored when the track at `from` is no longer `trackId` or `to` is outside the queue. The player then reports its new `queue`. |
 | `playItem` | `{ kind, id, mode, index? }` | `kind`: `album`, `playlist` or `song`. `mode`: `play` (replace the queue, starting at `index`), `next` (play after the current track) or `add` (append). |
 
 ## Messages from the hub

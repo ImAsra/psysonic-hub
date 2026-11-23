@@ -49,6 +49,7 @@
   "devices.playingOn": "Odtwarzanie na {{name}}",
   "queue.title": "Następne w kolejce",
   "queue.more": "W kolejce jeszcze: {{count}}",
+  "queue.move": "Przeciągnij, aby zmienić kolejność",
   "library.title": "Biblioteka",
   "library.search": "Szukaj utworów, albumów, wykonawców",
   "library.albums": "Albumy",

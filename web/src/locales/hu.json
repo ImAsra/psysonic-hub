@@ -49,6 +49,7 @@
   "devices.playingOn": "Lejátszás itt: {{name}}",
   "queue.title": "Következik",
   "queue.more": "Még {{count}} a sorban",
+  "queue.move": "Húzd az átrendezéshez",
   "library.title": "Könyvtár",
   "library.search": "Dalok, albumok, előadók keresése",
   "library.albums": "Albumok",

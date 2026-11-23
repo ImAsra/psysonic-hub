@@ -49,6 +49,7 @@
   "devices.playingOn": "{{name}} で再生中",
   "queue.title": "次に再生",
   "queue.more": "キューにあと {{count}} 曲",
+  "queue.move": "ドラッグして並べ替え",
   "library.title": "ライブラリ",
   "library.search": "曲、アルバム、アーティストを検索",
   "library.albums": "アルバム",

@@ -49,6 +49,7 @@
   "devices.playingOn": "正在 {{name}} 上播放",
   "queue.title": "即将播放",
   "queue.more": "队列中还有 {{count}} 首",
+  "queue.move": "拖动以重新排序",
   "library.title": "音乐库",
   "library.search": "搜索歌曲、专辑、艺术家",
   "library.albums": "专辑",

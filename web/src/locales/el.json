@@ -49,6 +49,7 @@
   "devices.playingOn": "Παίζει στο {{name}}",
   "queue.title": "Επερχόμενα",
   "queue.more": "{{count}} ακόμη στην ουρά",
+  "queue.move": "Σύρετε για αναδιάταξη",
   "library.title": "Βιβλιοθήκη",
   "library.search": "Αναζήτηση κομματιών, άλμπουμ, καλλιτεχνών",
   "library.albums": "Άλμπουμ",

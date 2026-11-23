@@ -50,6 +50,7 @@
   "devices.playingOn": "Reproduciendo en {{name}}",
   "queue.title": "A continuación",
   "queue.more": "{{count}} más en la cola",
+  "queue.move": "Arrastrar para reordenar",
   "library.title": "Biblioteca",
   "library.search": "Buscar canciones, álbumes, artistas",
   "library.albums": "Álbumes",

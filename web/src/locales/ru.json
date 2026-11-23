@@ -49,6 +49,7 @@
   "devices.playingOn": "Играет на {{name}}",
   "queue.title": "Далее",
   "queue.more": "Ещё в очереди: {{count}}",
+  "queue.move": "Перетащите, чтобы изменить порядок",
   "library.title": "Медиатека",
   "library.search": "Поиск треков, альбомов, исполнителей",
   "library.albums": "Альбомы",

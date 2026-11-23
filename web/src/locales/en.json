@@ -49,6 +49,7 @@
   "devices.playingOn": "Playing on {{name}}",
   "queue.title": "Up next",
   "queue.more": "{{count}} more in the queue",
+  "queue.move": "Drag to reorder",
   "library.title": "Library",
   "library.search": "Search songs, albums, artists",
   "library.albums": "Albums",
