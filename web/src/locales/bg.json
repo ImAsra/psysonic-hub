@@ -49,6 +49,7 @@
   "devices.playingOn": "Възпроизвежда се на {{name}}",
   "queue.title": "Следва",
   "queue.more": "Още {{count}} в опашката",
+  "queue.move": "Плъзнете, за да пренаредите",
   "library.title": "Библиотека",
   "library.search": "Търси песни, албуми, изпълнители",
   "library.albums": "Албуми",

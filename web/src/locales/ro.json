@@ -49,6 +49,7 @@
   "devices.playingOn": "Se redă pe {{name}}",
   "queue.title": "Urmează",
   "queue.more": "Încă {{count}} în coadă",
+  "queue.move": "Trage pentru a reordona",
   "library.title": "Bibliotecă",
   "library.search": "Caută piese, albume, artiști",
   "library.albums": "Albume",

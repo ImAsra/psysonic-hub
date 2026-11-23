@@ -27,6 +27,65 @@
   background: transparent;
   cursor: pointer;
 }
+/* up next: a grip in front of each row to drag it to another place */
+.qrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.qrow > .row {
+  flex: 1;
+  min-width: 0;
+}
+.grip {
+  flex: none;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  padding: 0 2px 0 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  background: transparent;
+  opacity: 0.55;
+  cursor: grab;
+  touch-action: none;
+}
+.qrow:hover .grip,
+.grip:focus-visible {
+  opacity: 1;
+}
+.rows.dragging,
+.rows.dragging .grip {
+  cursor: grabbing;
+  user-select: none;
+}
+.qrow.moving {
+  opacity: 0.4;
+}
+.qrow.drop-before::before,
+.qrow.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  pointer-events: none;
+}
+.qrow.drop-before::before {
+  top: -1px;
+}
+.qrow.drop-after::after {
+  bottom: -1px;
+}
+@media (hover: none) {
+  .grip {
+    opacity: 1;
+    padding: 0 6px 0 8px;
+  }
+}
 .row:hover {
   background: var(--bg-hover);
 }

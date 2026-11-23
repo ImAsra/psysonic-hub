@@ -50,6 +50,7 @@
   "devices.playingOn": "Wiedergabe auf {{name}}",
   "queue.title": "Als Nächstes",
   "queue.more": "{{count}} weitere in der Warteschlange",
+  "queue.move": "Ziehen zum Verschieben",
   "library.title": "Bibliothek",
   "library.search": "Songs, Alben, Künstler suchen",
   "library.albums": "Alben",

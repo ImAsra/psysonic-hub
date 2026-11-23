@@ -49,6 +49,7 @@
   "devices.playingOn": "In riproduzione su {{name}}",
   "queue.title": "Prossimi",
   "queue.more": "Altri {{count}} in coda",
+  "queue.move": "Trascina per riordinare",
   "library.title": "Libreria",
   "library.search": "Cerca brani, album, artisti",
   "library.albums": "Album",

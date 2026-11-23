@@ -49,6 +49,7 @@
   "devices.playingOn": "Lecture sur {{name}}",
   "queue.title": "À suivre",
   "queue.more": "{{count}} de plus dans la file",
+  "queue.move": "Glisser pour réorganiser",
   "library.title": "Bibliothèque",
   "library.search": "Rechercher des morceaux, albums, artistes",
   "library.albums": "Albums",

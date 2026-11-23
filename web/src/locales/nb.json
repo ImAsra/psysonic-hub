@@ -49,6 +49,7 @@
   "devices.playingOn": "Spiller på {{name}}",
   "queue.title": "Neste",
   "queue.more": "{{count}} til i køen",
+  "queue.move": "Dra for å endre rekkefølge",
   "library.title": "Bibliotek",
   "library.search": "Søk etter sanger, album, artister",
   "library.albums": "Album",
