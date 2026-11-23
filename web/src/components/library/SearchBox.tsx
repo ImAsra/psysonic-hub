@@ -24,7 +24,7 @@ export function SearchBox() {
         spellCheck={false}
         placeholder={t('library.search')}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => void setQuery(e.target.value)}
       />
     </form>
   );

@@ -32,7 +32,8 @@ export interface LibraryState {
   playerId: string;
   /** What is typed in the search box (cleared when a tab page opens). */
   query: string;
-  setQuery: (query: string) => void;
+  /** Updates the search box; emptying it while search results show goes back to the tab. */
+  setQuery: (query: string) => Promise<void>;
   showTab: (tab: LibraryTab) => Promise<void>;
   setSort: (sort: RemoteAlbumSort) => Promise<void>;
   loadMore: () => Promise<void>;
@@ -105,7 +106,10 @@ export const useLibraryStore = create<LibraryState>()((set, get) => {
     playerId: '',
     query: '',
 
-    setQuery: (query) => set({ query }),
+    async setQuery(query) {
+      set({ query });
+      if (!query.trim() && get().view.kind === 'search') await get().search('');
+    },
 
     async showTab(tab) {
       storage.set(STORAGE.libTab, tab);
