@@ -11,16 +11,16 @@ export function SearchResults({ result }: { result: BrowseResult }) {
 
   return (
     <>
-      {!!result.songs?.length && (
-        <>
-          <div className="lib-section">{t('library.songs')}</div>
-          <SongRows songs={result.songs} withAlbum onPlay={(s) => playItem('song', s.id, 'play')} />
-        </>
-      )}
       {!!result.albums?.length && (
         <>
           <div className="lib-section">{t('library.albums')}</div>
           <AlbumGrid albums={result.albums} />
+        </>
+      )}
+      {!!result.songs?.length && (
+        <>
+          <div className="lib-section">{t('library.songs')}</div>
+          <SongRows songs={result.songs} withAlbum onPlay={(s) => playItem('song', s.id, 'play')} />
         </>
       )}
       {!!result.artists?.length && (
