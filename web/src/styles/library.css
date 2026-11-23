@@ -177,6 +177,80 @@ input[type='search'] {
 .tile:hover .sq {
   filter: brightness(1.1);
 }
+/* play / add to queue over an album's artwork, shown on hover like Psysonic's album cards */
+.tile-box {
+  position: relative;
+}
+.tile-actions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tile-box:hover .tile-actions,
+.tile-box:focus-within .tile-actions {
+  opacity: 1;
+}
+.tile-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--on-accent);
+  background: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  pointer-events: none;
+}
+.tile-box:hover .tile-action,
+.tile-box:focus-within .tile-action {
+  pointer-events: auto;
+}
+.tile-action:hover {
+  filter: brightness(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile-actions {
+    transition: none;
+  }
+}
+/* no hover on touch screens: small round buttons always visible in the artwork's corner, play outermost */
+@media (hover: none) {
+  .tile-actions {
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 7px;
+    box-sizing: border-box;
+    background: none;
+    opacity: 1;
+  }
+  .tile-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    pointer-events: auto;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
+  }
+  /* on the artwork in both themes: always light on dark */
+  .tile-action + .tile-action {
+    color: #fff;
+    background: rgba(17, 17, 27, 0.72);
+  }
+}
 .tile.round {
   text-align: center;
 }
