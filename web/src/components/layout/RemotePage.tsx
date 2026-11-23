@@ -5,7 +5,10 @@ import { PlayerCard } from '../player/PlayerCard.tsx';
 import { QueueCard } from '../queue/QueueCard.tsx';
 import { NoPlayersCard } from './NoPlayersCard.tsx';
 
-/** The remote: the player, queue, library and devices, or a note while no player is connected. */
+/**
+ * The remote: the player, queue, devices and library, or a note while no player is connected.
+ * This is the order on a phone; wider screens place the cards in a grid (layout.css).
+ */
 export function RemotePage() {
   const hasPlayers = useHubStore((s) => s.devices.length > 0);
 
@@ -14,8 +17,8 @@ export function RemotePage() {
     <>
       <PlayerCard />
       <QueueCard />
-      <LibraryCard />
       <DevicesCard />
+      <LibraryCard />
     </>
   );
 }
