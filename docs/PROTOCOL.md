@@ -64,3 +64,13 @@ A failed save or a missing answer cancels the transfer instead of letting the ta
 ## Close codes
 
 4001 hello timeout, 4002 bad JSON, 4003 hello first, 4004 unsupported protocol, 4005 unauthorized (also: the web login this socket belongs to was signed out or expired), 4006 bad deviceId, 4007 too many devices, 4008 replaced by a newer connection of the same device, 4010 too many connections, 4011 this address is locked out after repeated failures, 4012 message rate exceeded (the hub allows about 30 messages per second per connection; a cover image counts as ten).
+
+## Connecting by QR code
+
+The web page's Settings show the hub address and the device token, and, once the token is shown, both as a QR code for apps that can scan one. The code holds
+
+```text
+psysonic-hub://connect?v=1&url=<hub address>&token=<device token>
+```
+
+with `url` and `token` URL-encoded. An app reads `url` as the hub address (the page's own origin, e.g. `https://hub.example.com` or `http://192.168.1.5:5533`) and `token` as the device token, and ignores codes with another scheme or a `v` it does not know. The custom scheme means a phone's camera app does not open it, so the token does not end up in a browser history. A regenerated token makes old codes useless.
