@@ -41,7 +41,7 @@
     "eslint-plugin-react-refresh": "^0.5.8",
     "eslint-plugin-simple-import-sort": "^14.0.0",
     "globals": "^17.14.0",
-    "i18next": "^26.7.2",
+    "i18next": "^27.2.2",
     "jsdom": "^31.0.1",
     "lucide-react": "^1.77.0",
     "prettier": "^3.10.1",
